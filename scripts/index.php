@@ -19,16 +19,19 @@
 
         <aside class="login-panel">
             <!-- Login Form -->
-            <form id="loginForm" class="auth-form active" action="../php/login_process.php" method="POST">
+            <form id="loginForm" class="auth-form active" method="post">
                 <h3 class="login-heading">USER LOGIN</h3>
+
                 <div class="form-body">
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/email-icon.png" alt="email icon">
-                        <input type="email" name="username" placeholder="Email Address" required>
+                        <!-- Numele trebuie să fie "email" -->
+                        <input type="text" name="email" placeholder="Email" required>
                     </div>
 
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/password-icon.png" alt="password icon">
+                        <!-- Numele trebuie să fie "password" -->
                         <input id="loginPassword" type="password" name="password" placeholder="Password" required>
                         <button type="button" class="toggle-visibility" data-target="loginPassword">
                             <img class="eye-icon" src="../assets/img/toggle-password.png" alt="show/hide">
@@ -36,7 +39,7 @@
                     </div>
 
                     <div class="links">
-                        <a class="link-forgot" href="forgot_password.php">Forgot password?</a>
+                        <a class="link-forgot" href="#">Forgot password?</a>
                         <a class="link-signup" href="#" id="showSignup">Don't have an account?</a>
                     </div>
                 </div>
