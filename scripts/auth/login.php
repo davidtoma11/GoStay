@@ -29,7 +29,7 @@ if(!empty($data->email) && !empty($data->password)) {
         echo json_encode([
             "success" => true, 
             "message" => "Login successful!",
-            "redirect" => "../scripts/dashboard.php"
+            "redirect" => "../scripts/crud/hub.php"
         ]);
     } else {
         echo json_encode(["success" => false, "message" => "Invalid email or password"]);

@@ -57,7 +57,7 @@ if(!empty($data->first_name) && !empty($data->last_name) &&
         echo json_encode([
             "success" => true, 
             "message" => "Account created successfully!",
-            "redirect" => "../dashboard.php"
+            "redirect" => "../scripts/crud/hub.php"
         ]);
     } else {
         echo json_encode(["success" => false, "message" => "Failed to create account. Please try again."]);
