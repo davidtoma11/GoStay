@@ -2,81 +2,83 @@
 class User {
     private $conn;
     private $table_name = "users";
+
     public $id;
+    public $first_name;
+    public $last_name;
     public $email;
     public $password;
     public $role;
-    public $first_name;
-    public $last_name;
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    //Login user with email and password
-    public function login($email, $password) {
-        $query = "SELECT id, email, password, role, first_name, last_name 
+    // Check if email exists and load user data
+    public function emailExists() {
+        // Secure query using named placeholder
+        $query = "SELECT id, first_name, last_name, password, role 
                   FROM " . $this->table_name . " 
-                  WHERE email = ? 
+                  WHERE email = :email 
                   LIMIT 0,1";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $email);
+        
+        // Sanitize input
+        $this->email = htmlspecialchars(strip_tags($this->email));
+        
+        // Bind parameter
+        $stmt->bindParam(':email', $this->email);
         $stmt->execute();
 
         if($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Verify password
-            if(password_verify($password, $row['password'])) {
-                // Set user properties
-                $this->id = $row['id'];
-                $this->email = $row['email'];
-                $this->role = $row['role'];
-                $this->first_name = $row['first_name'];
-                $this->last_name = $row['last_name'];
-                return true;
-            }
+            $this->id = $row['id'];
+            $this->first_name = $row['first_name'];
+            $this->last_name = $row['last_name'];
+            $this->password = $row['password']; // Stores the hash
+            $this->role = $row['role'];
+            return true;
         }
         return false;
     }
 
     // Register new user
     public function register() {
-        $query = "INSERT INTO " . $this->table_name . " 
-                  SET email=:email, password=:password, 
-                      first_name=:first_name, last_name=:last_name, role='client'";
-        
+        $query = "INSERT INTO " . $this->table_name . "
+                SET
+                    first_name = :first_name,
+                    last_name = :last_name,
+                    email = :email,
+                    password = :password,
+                    role = :role,
+                    created_at = NOW()";
+
         $stmt = $this->conn->prepare($query);
 
-        // Sanitize input
-        $this->email = htmlspecialchars(strip_tags($this->email));
+        // Sanitize inputs (XSS Protection)
         $this->first_name = htmlspecialchars(strip_tags($this->first_name));
         $this->last_name = htmlspecialchars(strip_tags($this->last_name));
+        $this->email = htmlspecialchars(strip_tags($this->email));
         
-        // Hash password for security
-        $this->password = password_hash($this->password, PASSWORD_DEFAULT);
+        // Hash password (Security critical)
+        // Ensure password is hashed before saving
+        if (password_needs_rehash($this->password, PASSWORD_BCRYPT) || strlen($this->password) < 60) {
+             $this->password = password_hash($this->password, PASSWORD_BCRYPT);
+        }
 
         // Bind parameters
-        $stmt->bindParam(":email", $this->email);
-        $stmt->bindParam(":password", $this->password);
-        $stmt->bindParam(":first_name", $this->first_name);
-        $stmt->bindParam(":last_name", $this->last_name);
+        $stmt->bindParam(':first_name', $this->first_name);
+        $stmt->bindParam(':last_name', $this->last_name);
+        $stmt->bindParam(':email', $this->email);
+        $stmt->bindParam(':password', $this->password);
+        $stmt->bindParam(':role', $this->role);
 
         if($stmt->execute()) {
             $this->id = $this->conn->lastInsertId();
             return true;
         }
         return false;
-    }
-
-    // Check if email already exists
-    public function emailExists() {
-        $query = "SELECT id FROM " . $this->table_name . " WHERE email = ? LIMIT 0,1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, $this->email);
-        $stmt->execute();
-        return $stmt->rowCount() > 0;
     }
 }
 ?>

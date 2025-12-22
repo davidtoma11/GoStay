@@ -1,7 +1,4 @@
 USE gostay;
-
--- Room Availability Triggers
-
 DELIMITER $$
 
 DROP TRIGGER IF EXISTS check_room_availability_insert$$

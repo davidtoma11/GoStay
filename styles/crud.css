@@ -622,39 +622,6 @@ body {
     opacity: 0.5;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-    .crud-grid {
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 1.25rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .crud-container { padding: 1.5rem; }
-    .crud-header { flex-direction: column; gap: 1.5rem; align-items: stretch; }
-    .logo-title { justify-content: center; text-align: center; }
-    .header-left { align-items: center; text-align: center; }
-    .crud-title { font-size: 2.5rem; }
-    .user-info { justify-content: center; flex-wrap: wrap; }
-    .crud-grid { grid-template-columns: 1fr; gap: 1rem; }
-    .operations-header { flex-direction: column; gap: 1rem; text-align: center; padding: 1.5rem; }
-    .header-title { justify-content: center; }
-    .operations-content { padding: 1.5rem; }
-    .form-grid { grid-template-columns: 1fr; gap: 1rem; }
-    .form-actions { flex-direction: column; }
-    .btn { width: 100%; max-width: none; }
-}
-
-@media (max-width: 480px) {
-    .crud-container { padding: 1rem; }
-    .crud-title { font-size: 2rem; }
-    .crud-card { padding: 1.5rem 1.25rem; }
-    .operations-content { padding: 1rem; }
-    .data-table th, .data-table td { padding: 0.75rem 1rem; font-size: 0.85rem; }
-    .action-buttons { flex-direction: column; }
-}
-
 /* Animations */
 .crud-card, .operations-container {
     animation: fadeInUp 0.5s ease-out;
@@ -701,4 +668,243 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .crud-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .crud-container { padding: 1.5rem; }
+    .crud-header { flex-direction: column; gap: 1.5rem; align-items: stretch; }
+    .logo-title { justify-content: center; text-align: center; }
+    .header-left { align-items: center; text-align: center; }
+    .crud-title { font-size: 2.5rem; }
+    .user-info { justify-content: center; flex-wrap: wrap; }
+    .crud-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .operations-header { flex-direction: column; gap: 1rem; text-align: center; padding: 1.5rem; }
+    .header-title { justify-content: center; }
+    .operations-content { padding: 1.5rem; }
+    .form-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .form-actions { flex-direction: column; }
+    .btn { width: 100%; max-width: none; }
+}
+
+@media (max-width: 480px) {
+    .crud-container { padding: 1rem; }
+    .crud-title { font-size: 2rem; }
+    .crud-card { padding: 1.5rem 1.25rem; }
+    .operations-content { padding: 1rem; }
+    .data-table th, .data-table td { padding: 0.75rem 1rem; font-size: 0.85rem; }
+    .action-buttons { flex-direction: column; }
+}
+
+
+/* ==========================================================================
+   STILURI SPECIFICE PENTRU LOGIN / SIGNUP (INTEGRATE)
+   ========================================================================== */
+
+.page-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+/* Partea stângă - Hero */
+.hero {
+    flex: 1;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.hero-brand {
+    font-family: 'croatah', sans-serif;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+    font-weight: 300;
+}
+
+.hero-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 500px;
+    opacity: 0.8;
+}
+
+/* Partea dreaptă - Formular */
+.login-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--surface);
+    position: relative;
+}
+
+.auth-form {
+    width: 100%;
+    max-width: 420px;
+    padding: 2rem;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.login-heading {
+    color: var(--primary);
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+    font-weight: 800;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.form-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Input-uri cu iconițe pentru Login */
+.input-with-icon {
+    position: relative;
+    width: 100%;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem; /* Spațiu pentru iconiță stânga */
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+    background: var(--background);
+    color: var(--text-primary);
+}
+
+.input-with-icon input:focus {
+    border-color: var(--primary);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px var(--primary-ultralight);
+}
+
+.left-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.toggle-visibility {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.eye-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.toggle-visibility:hover .eye-icon {
+    opacity: 0.8;
+}
+
+.links {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.links a:hover {
+    color: var(--primary);
+}
+
+.actions {
+    margin-top: 2rem;
+}
+
+.actions .btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Logo mic (dacă e folosit) */
+.logo {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    width: 40px;
+    height: 40px;
+    background-image: url('../assets/img/logo.png'); /* Asigură-te că există */
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* Responsive Login */
+@media (max-width: 900px) {
+    .page-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .hero {
+        padding: 3rem 2rem;
+        flex: 0 0 auto;
+        min-height: 300px;
+    }
+
+    .hero-brand { font-size: 3rem; }
+    .hero-title { font-size: 2rem; }
+    
+    .login-panel {
+        padding: 2rem 1rem;
+        flex: 1 1 auto;
+    }
 }

@@ -22,7 +22,6 @@ $db = $database->getConnection();
 
 <body>
     <div class="crud-container">
-        <!-- Header -->
         <div class="crud-header">
             <div class="header-left">
                 <div class="logo-title">
@@ -38,9 +37,7 @@ $db = $database->getConnection();
             </div>
         </div>
 
-        <!-- CRUD Menu Grid -->
         <div class="crud-grid">
-            <!-- Users Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/users.png" alt="Users Management">
@@ -56,7 +53,6 @@ $db = $database->getConnection();
                 <a href="operations.php?table=users" class="btn btn-primary">Manage Users</a>
             </div>
 
-            <!-- Hotels Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/hotels.png" alt="Hotels Management">
@@ -72,7 +68,6 @@ $db = $database->getConnection();
                 <a href="operations.php?table=hotels" class="btn btn-primary">Manage Hotels</a>
             </div>
 
-            <!-- Rooms Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/rooms.png" alt="Rooms Management">
@@ -88,7 +83,6 @@ $db = $database->getConnection();
                 <a href="operations.php?table=rooms" class="btn btn-primary">Manage Rooms</a>
             </div>
 
-            <!-- Room Photos Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/photos.png" alt="Room Photos">
@@ -104,7 +98,6 @@ $db = $database->getConnection();
                 <a href="operations.php?table=room_photos" class="btn btn-primary">Manage Photos</a>
             </div>
 
-            <!-- Reservations Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/reservations.png" alt="Reservations">
@@ -120,7 +113,6 @@ $db = $database->getConnection();
                 <a href="operations.php?table=reservations" class="btn btn-primary">Manage Reservations</a>
             </div>
 
-            <!-- Reviews Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/reviews.png" alt="Reviews Management">
@@ -136,7 +128,6 @@ $db = $database->getConnection();
                 <a href="operations.php?table=reviews" class="btn btn-primary">Manage Reviews</a>
             </div>
 
-            <!-- Messages Card -->
             <div class="crud-card">
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/messages.png" alt="Messages">
