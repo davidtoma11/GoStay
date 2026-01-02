@@ -1,238 +1,378 @@
-// Handle form submissions
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // Login form listener
+    console.log("Login script loaded.");
+
+    // --- ELEMENT REFERENCES ---
     const loginForm = document.getElementById('loginForm');
-    if(loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            submitLoginForm(this);
-        });
-    }
-
-    // Signup form listener
     const signupForm = document.getElementById('signupForm');
-    if(signupForm) {
-        signupForm.addEventListener('submit', function(e) {
+    const forgotForm = document.getElementById('forgotForm');
+    const verifyCodeForm = document.getElementById('verifyCodeForm');
+    const newPasswordForm = document.getElementById('newPasswordForm');
+
+    // Variables for Reset Flow
+    let resetEmail = "";
+    let resetCode = "";
+    let countdown; 
+    
+    // --- TIMER: 5 MINUTE (300 secunde) ---
+    const TIMER_DURATION = 300; 
+
+    // --- HELPER: Hide All Forms ---
+    function hideAllForms() {
+        document.querySelectorAll('.auth-form').forEach(f => {
+            f.style.display = 'none';
+            f.classList.remove('active');
+        });
+        clearInterval(countdown);
+    }
+
+    // --- NAVIGATION HANDLERS ---
+
+    // 1. Forgot Password Link
+    const showForgotBtn = document.getElementById('showForgot');
+    if(showForgotBtn) {
+        showForgotBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            submitSignupForm(this);
+            hideAllForms();
+            if(forgotForm) {
+                forgotForm.style.display = 'block';
+                forgotForm.classList.add('active');
+            }
         });
     }
 
-    // Form toggle: Show Signup
-    const showSignup = document.getElementById('showSignup');
-    if(showSignup) {
-        showSignup.addEventListener('click', function(e) {
+    // 2. Sign Up Link
+    const showSignupBtn = document.getElementById('showSignup');
+    if(showSignupBtn) {
+        showSignupBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('signupForm').style.display = 'block';
+            hideAllForms();
+            if(signupForm) {
+                signupForm.style.display = 'block';
+                signupForm.classList.add('active');
+            }
         });
     }
 
-    // Form toggle: Show Login
-    const showLogin = document.getElementById('showLogin');
-    if(showLogin) {
-        showLogin.addEventListener('click', function(e) {
+    // 3. Back to Login (REPARAT AICI)
+    document.body.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('showLoginBtn')) {
             e.preventDefault();
-            document.getElementById('signupForm').style.display = 'none';
-            document.getElementById('loginForm').style.display = 'block';
+            hideAllForms();
+            if(loginForm) {
+                loginForm.style.display = 'block';
+                loginForm.classList.add('active');
+            }
+        } // Acolada de la IF se inchide aici
+    }); // Paranteza de la Listener se inchide aici
+
+    // --- TIMER LOGIC ---
+    function startTimer(duration, display) {
+        let timer = duration, minutes, seconds;
+        const resendBtn = document.getElementById('resendCodeBtn');
+        
+        // Asiguram ca butonul e activ vizual
+        if(resendBtn) {
+            resendBtn.style.pointerEvents = "auto"; 
+            resendBtn.style.opacity = "1";
+            resendBtn.style.color = "#007bff"; 
+            resendBtn.style.cursor = "pointer";
+            resendBtn.textContent = "Resend Code";
+        }
+
+        clearInterval(countdown);
+        
+        // Functie interna pentru update vizual
+        function updateDisplay() {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            if(display) display.textContent = minutes + ":" + seconds;
+        }
+
+        updateDisplay();
+
+        countdown = setInterval(function () {
+            if (--timer < 0) {
+                clearInterval(countdown);
+                if(display) display.textContent = "EXPIRED";
+            } else {
+                updateDisplay();
+            }
+        }, 1000);
+    }
+
+    // --- FORM SUBMISSIONS ---
+
+    // 1. STEP 1: Send Email
+    if(forgotForm) {
+        forgotForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('forgotEmail');
+            resetEmail = emailInput.value;
+            
+            const btn = this.querySelector('.btn');
+            const originalText = btn.textContent;
+            btn.disabled = true; btn.textContent = "Sending...";
+
+            fetch('auth/send_reset.php', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // DEBUG POPUP
+                    if(data.debug_code) {
+                        alert("DEBUG: Codul este " + data.debug_code);
+                        console.log("CODE:", data.debug_code);
+                    }
+                    
+                    showMessage("Code sent!", "success");
+
+                    setTimeout(() => {
+                        hideAllForms();
+                        if(verifyCodeForm) {
+                            verifyCodeForm.style.display = 'block';
+                            verifyCodeForm.classList.add('active');
+                            const display = document.querySelector('#timerDisplay');
+                            startTimer(TIMER_DURATION, display);
+                        }
+                    }, 1000);
+                } else {
+                    showMessage(data.message, "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showMessage("Network error.", "error");
+            })
+            .finally(() => {
+                btn.disabled = false; btn.textContent = originalText;
+            });
         });
     }
 
-    // Password visibility toggle
+    // 2. RESEND CODE BUTTON HANDLER
+    document.body.addEventListener('click', function(e) {
+        if(e.target && e.target.id === 'resendCodeBtn') {
+            e.preventDefault();
+            console.log("Resend Button Clicked");
+
+            const btn = e.target;
+            // Nu il dezactivam complet, doar vizual cat timp incarca
+            btn.style.pointerEvents = "none";
+            btn.textContent = "Sending...";
+            btn.style.opacity = "0.7";
+
+            fetch('auth/send_reset.php', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    if(data.debug_code) {
+                         alert("DEBUG: Noul cod este " + data.debug_code);
+                         console.log("NEW CODE:", data.debug_code);
+                    }
+                    
+                    // --- RESETEAZA TIMER-UL ---
+                    const display = document.querySelector('#timerDisplay');
+                    startTimer(TIMER_DURATION, display); 
+                    
+                    showMessage("New code sent!", "success");
+                } else {
+                    showMessage(data.message, "error");
+                }
+            })
+            .finally(() => {
+                btn.style.pointerEvents = "auto";
+                btn.textContent = "Resend Code";
+                btn.style.opacity = "1";
+            });
+        }
+    });
+
+    // 3. STEP 2: Verify Code
+    if(verifyCodeForm) {
+        verifyCodeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const codeInput = document.getElementById('verifyCodeInput');
+            resetCode = codeInput.value;
+            
+            const btn = this.querySelector('.btn');
+            const originalText = btn.textContent;
+            btn.disabled = true; btn.textContent = "Verifying...";
+
+            fetch('auth/verify_code.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail, code: resetCode })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    hideAllForms();
+                    if(newPasswordForm) {
+                        newPasswordForm.style.display = 'block';
+                        newPasswordForm.classList.add('active');
+                    }
+                } else {
+                    showMessage(data.message, "error");
+                }
+            })
+            .catch(err => showMessage("Network error.", "error"))
+            .finally(() => { btn.disabled = false; btn.textContent = originalText; });
+        });
+    }
+
+    // 4. STEP 3: Set New Password
+    if(newPasswordForm) {
+        newPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const p1 = document.getElementById('newPassInput').value;
+            const p2 = document.getElementById('confirmPassInput').value;
+
+            if(p1 !== p2) {
+                showMessage("Passwords do not match!", "error");
+                return;
+            }
+            if(p1.length < 6) {
+                showMessage("Password too short (min 6 chars)", "error");
+                return;
+            }
+
+            const btn = this.querySelector('.btn');
+            const originalText = btn.textContent;
+            btn.disabled = true; btn.textContent = "Updating...";
+
+            fetch('auth/reset_confirm.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: resetEmail, code: resetCode, password: p1 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message, "success");
+                    setTimeout(() => {
+                        hideAllForms();
+                        if(loginForm) {
+                            loginForm.style.display = 'block';
+                            loginForm.classList.add('active');
+                        }
+                    }, 2000);
+                } else {
+                    showMessage(data.message, "error");
+                }
+            })
+            .catch(err => showMessage("Network error.", "error"))
+            .finally(() => { btn.disabled = false; btn.textContent = originalText; });
+        });
+    }
+
+    // --- LOGIN & SIGNUP HANDLERS ---
+    if(loginForm) loginForm.addEventListener('submit', e => { e.preventDefault(); submitLoginForm(loginForm); });
+    if(signupForm) signupForm.addEventListener('submit', e => { e.preventDefault(); submitSignupForm(signupForm); });
+
+    // Toggle Visibility
     document.querySelectorAll('.toggle-visibility').forEach(button => {
         button.addEventListener('click', function() {
             const targetId = this.getAttribute('data-target');
             const pwd = document.getElementById(targetId);
-            const eyeImg = this.querySelector('.eye-icon');
-            
-            if(pwd.type === 'password'){
-                pwd.type = 'text';
-                if(eyeImg) eyeImg.style.filter = 'brightness(0.8)';
-            } else {
-                pwd.type = 'password';
-                if(eyeImg) eyeImg.style.filter = 'none';
-            }
+            if(pwd) pwd.type = pwd.type === 'password' ? 'text' : 'password';
         });
     });
 });
 
+// --- HELPER FUNCTIONS ---
+
 function submitLoginForm(form) {
     const submitBtn = form.querySelector('.btn');
     const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Processing...'; submitBtn.disabled = true;
 
-    // Show loading state
-    submitBtn.textContent = 'Processing...';
-    submitBtn.disabled = true;
-
-    // 1. Preluăm valorile explicit după ID
-    const emailInput = document.getElementById('loginEmail');
-    const passInput = document.getElementById('loginPassword');
-
-    const emailVal = emailInput ? emailInput.value : '';
-    const passwordVal = passInput ? passInput.value : '';
-    
-    // DEBUG: Vezi în consolă (F12) ce valori se citesc
-    console.log("Valoare Email citită:", emailVal);
-    console.log("Valoare Parolă citită:", passwordVal);
-
-    // Check if csrfToken exists
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     const token = (typeof csrfToken !== 'undefined') ? csrfToken : '';
-
-    const data = {
-        email: emailVal,
-        password: passwordVal,
-        csrf_token: token
-    };
 
     fetch('auth/login.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, csrf_token: token })
     })
-    .then(response => response.json())
-    .then(result => {
-        console.log('Server response:', result);
-        if (result.success) {
-            showMessage(result.message, 'success');
-            if (result.redirect) {
-                setTimeout(() => {
-                    window.location.href = result.redirect;
-                }, 1000);
-            }
-        } else {
-            showMessage(result.message, 'error');
-        }
+    .then(r => r.json())
+    .then(res => {
+        if(res.success) {
+            showMessage(res.message, 'success');
+            if(res.redirect) setTimeout(() => window.location.href = res.redirect, 1000);
+        } else showMessage(res.message, 'error');
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Network error. Please try again.', 'error');
-    })
-    .finally(() => {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    });
+    .catch(() => showMessage('Network error', 'error'))
+    .finally(() => { submitBtn.textContent = originalText; submitBtn.disabled = false; });
 }
 
 function submitSignupForm(form) {
     const submitBtn = form.querySelector('.btn');
     const originalText = submitBtn.textContent;
 
-    // Show loading state
-    submitBtn.textContent = 'Processing...';
-    submitBtn.disabled = true;
+    const p1 = document.getElementById('signupPassword').value;
+    const p2 = document.getElementById('signupConfirmPassword').value;
 
-    // CRITICAL FIX: Retrieve values by ID to avoid "all fields required" error
-    const firstNameVal = document.getElementById('regFirstName').value;
-    const lastNameVal = document.getElementById('regLastName').value;
-    const emailVal = document.getElementById('regEmail').value;
-    const passwordVal = document.getElementById('signupPassword').value;
-
-    // Get reCAPTCHA response and CSRF Token
-    const token = (typeof csrfToken !== 'undefined') ? csrfToken : '';
-    let recaptchaResponse = '';
-    
-    try {
-        recaptchaResponse = grecaptcha.getResponse();
-    } catch (e) {
-        console.warn("reCAPTCHA not loaded or error:", e);
+    if (p1 !== p2) {
+        showMessage("Passwords do not match!", "error");
+        return;
     }
 
-    const data = {
-        first_name: firstNameVal,
-        last_name: lastNameVal,
-        email: emailVal,
-        password: passwordVal,
-        csrf_token: token,
-        recaptcha_response: recaptchaResponse
-    };
+    submitBtn.textContent = 'Processing...'; submitBtn.disabled = true;
 
-    console.log('Sending signup data:', data);
+    const data = {
+        first_name: document.getElementById('regFirstName').value,
+        last_name: document.getElementById('regLastName').value,
+        email: document.getElementById('regEmail').value,
+        password: p1,
+        csrf_token: (typeof csrfToken !== 'undefined') ? csrfToken : '',
+        recaptcha_response: (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : ''
+    };
 
     fetch('auth/signup.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
-    .then(result => {
-        console.log('Server response:', result);
-        if (result.success) {
-            showMessage(result.message, 'success');
-            
-            // Reset form on success
+    .then(r => r.json())
+    .then(res => {
+        if(res.success) {
+            showMessage(res.message, 'success');
             form.reset();
             try { grecaptcha.reset(); } catch(e){} 
-
-            if (result.redirect) {
-                setTimeout(() => {
-                    window.location.href = result.redirect;
-                }, 1000);
-            } else {
-                setTimeout(() => {
-                    document.getElementById('showLogin').click();
-                }, 2000);
-            }
+            setTimeout(() => { document.querySelector('.showLoginBtn').click(); }, 2000);
         } else {
-            showMessage(result.message, 'error');
+            showMessage(res.message, 'error');
             try { grecaptcha.reset(); } catch(e){}
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Network error. Please try again.', 'error');
-    })
-    .finally(() => {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    });
+    .catch(() => showMessage('Network error', 'error'))
+    .finally(() => { submitBtn.textContent = originalText; submitBtn.disabled = false; });
 }
 
 function showMessage(message, type) {
-    // Remove old messages
-    const oldMessages = document.querySelectorAll('.message');
-    oldMessages.forEach(msg => msg.remove());
+    const old = document.querySelectorAll('.message');
+    old.forEach(m => m.remove());
 
-    // Create new message
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${type}`;
-    messageDiv.textContent = message;
-    
-    // Quick styling
-    messageDiv.style.padding = '10px';
-    messageDiv.style.marginBottom = '10px';
-    messageDiv.style.borderRadius = '4px';
-    messageDiv.style.textAlign = 'center';
-    
-    if (type === 'success') {
-        messageDiv.style.backgroundColor = '#d4edda';
-        messageDiv.style.color = '#155724';
-        messageDiv.style.border = '1px solid #c3e6cb';
-    } else {
-        messageDiv.style.backgroundColor = '#f8d7da';
-        messageDiv.style.color = '#721c24';
-        messageDiv.style.border = '1px solid #f5c6cb';
-    }
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.textContent = message;
+    div.style.cssText = `padding:10px; margin-bottom:10px; border-radius:4px; text-align:center; 
+        background:${type === 'success' ? '#d4edda' : '#f8d7da'}; 
+        color:${type === 'success' ? '#155724' : '#721c24'}; border:1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'};`;
 
-    // Insert message in form
-    const form = document.querySelector('.auth-form[style*="display: block"]') || 
-                 document.querySelector('.auth-form:not([style*="display: none"])');
-    
-    if(form) {
-        const heading = form.querySelector('.login-heading');
-        if(heading) {
-            heading.parentNode.insertBefore(messageDiv, heading.nextSibling);
-        } else {
-            form.insertBefore(messageDiv, form.firstChild);
-        }
-    }
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        messageDiv.remove();
-    }, 5000);
+    const form = document.querySelector('.auth-form[style*="display: block"]') || document.querySelector('.auth-form.active') || document.getElementById('loginForm');
+    if(form) form.prepend(div);
+    setTimeout(() => div.remove(), 5000);
 }

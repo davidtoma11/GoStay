@@ -80,5 +80,65 @@ class User {
         }
         return false;
     }
+
+
+    // --- RESET PASSWORD METHODS ---
+
+    // 1. Save Reset Token
+    public function setResetToken($code) {
+        // Code valid for 5 minutes
+        $query = "UPDATE " . $this->table_name . " 
+                  SET reset_code = :code, reset_expires_at = DATE_ADD(NOW(), INTERVAL 5 MINUTE) 
+                  WHERE email = :email";
+
+        $stmt = $this->conn->prepare($query);
+        
+        $stmt->bindParam(":code", $code);
+        $stmt->bindParam(":email", $this->email);
+
+        if($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    // 2. Verify Code and Reset Password
+    public function resetPassword($code, $new_password) {
+        // Check if code matches AND is not expired
+        $query = "SELECT id, reset_expires_at FROM " . $this->table_name . " 
+                  WHERE email = :email AND reset_code = :code LIMIT 1";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":email", $this->email);
+        $stmt->bindParam(":code", $code);
+        $stmt->execute();
+
+        if($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $expiry = $row['reset_expires_at'];
+
+            // Check expiry
+            if(new DateTime() > new DateTime($expiry)) {
+                return "expired";
+            }
+
+            // Code valid, update password
+            $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+            
+            // Update password AND clear the reset code so it can't be used again
+            $updateQuery = "UPDATE " . $this->table_name . " 
+                            SET password = :password, reset_code = NULL, reset_expires_at = NULL 
+                            WHERE email = :email";
+            
+            $updateStmt = $this->conn->prepare($updateQuery);
+            $updateStmt->bindParam(":password", $hashed_password);
+            $updateStmt->bindParam(":email", $this->email);
+
+            if($updateStmt->execute()) {
+                return "success";
+            }
+        }
+        return "invalid";
+    }
 }
 ?>

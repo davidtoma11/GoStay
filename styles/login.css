@@ -409,24 +409,24 @@ body {
     }
 }
 
-/* Stilizare Container Captcha */
+
 .captcha-wrapper {
     display: flex;
-    justify-content: center; /* Centrează widget-ul orizontal */
+    justify-content: center;
     align-items: center;
-    margin: 1.5rem 0;        /* Spațiu sus și jos */
+    margin: 1.5rem 0;       
     width: 100%;
-    min-height: 78px;        /* Înălțimea standard a widgetului */
+    min-height: 78px;        
 }
 
-/* Ajustare pentru ecrane foarte mici (mobil) */
+
 @media (max-width: 400px) {
     .g-recaptcha {
-        transform: scale(0.85); /* Îl micșorăm puțin dacă ecranul e îngust */
+        transform: scale(0.85); 
         transform-origin: 0 0;
     }
     .captcha-wrapper {
         justify-content: center;
-        margin-left: -10px; /* Compensare vizuală pentru scale */
+        margin-left: -10px; 
     }
 }

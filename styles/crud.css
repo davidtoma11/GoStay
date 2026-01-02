@@ -874,14 +874,14 @@ body {
     font-size: 1.1rem;
 }
 
-/* Logo mic (dacă e folosit) */
+
 .logo {
     position: absolute;
     top: 2rem;
     right: 2rem;
     width: 40px;
     height: 40px;
-    background-image: url('../assets/img/logo.png'); /* Asigură-te că există */
+    background-image: url('../assets/img/logo.png'); 
     background-size: contain;
     background-repeat: no-repeat;
 }

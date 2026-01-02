@@ -1,6 +1,5 @@
 <?php
 session_start();
-// Generate CSRF Token if not exists
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -31,6 +30,7 @@ if (empty($_SESSION['csrf_token'])) {
         </section>
 
         <aside class="login-panel">
+            
             <form id="loginForm" class="auth-form active">
                 <h3 class="login-heading">USER LOGIN</h3>
                 <div class="form-body">
@@ -38,7 +38,6 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
                         <input type="text" id="loginEmail" name="email" placeholder="Email" required>
                     </div>
-
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
                         <input id="loginPassword" type="password" name="password" placeholder="Password" required>
@@ -46,9 +45,8 @@ if (empty($_SESSION['csrf_token'])) {
                             <img class="eye-icon" src="../assets/img/toggle-password.png" alt="show">
                         </button>
                     </div>
-
                     <div class="links">
-                        <a class="link-forgot" href="#">Forgot password?</a>
+                        <a class="link-forgot" href="#" id="showForgot">Forgot password?</a>
                         <a class="link-signup" href="#" id="showSignup">Don't have an account?</a>
                     </div>
                 </div>
@@ -65,17 +63,15 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="left-icon" src="../assets/img/surname-icon.png" alt="first">
                         <input type="text" id="regFirstName" name="first_name" placeholder="First Name" required>
                     </div>
-
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/name-icon.png" alt="last">
                         <input type="text" id="regLastName" name="last_name" placeholder="Last Name" required>
                     </div>
-
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
                         <input type="email" id="regEmail" name="email" placeholder="Email Address" required>
                     </div>
-
+                    
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
                         <input id="signupPassword" type="password" name="password" placeholder="Password" required>
@@ -84,20 +80,89 @@ if (empty($_SESSION['csrf_token'])) {
                         </button>
                     </div>
 
+                    <div class="field input-with-icon">
+                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <input id="signupConfirmPassword" type="password" name="confirm_password" placeholder="Confirm Password" required>
+                    </div>
+
                     <div class="captcha-wrapper">
                         <div class="g-recaptcha" data-sitekey="6LedkzIsAAAAACz3Fe0q4XXEeT5gkaX91m9crDiQ" style="margin-top: 15px; transform:scale(0.85); transform-origin:0 0;"></div>
                     </div>
-
                     <div class="links">
-                        <a class="link-login" href="#" id="showLogin">Already have an account?</a>
+                        <a class="link-login showLoginBtn" href="#">Already have an account?</a>
                     </div>
                 </div>
-
                 <div class="actions">
                     <button type="submit" class="btn">Sign Up</button>
                 </div>
                 <div id="signupMessage" style="color: red; text-align: center; margin-top: 10px;"></div>
             </form>
+
+            <form id="forgotForm" class="auth-form" style="display: none;">
+                <h3 class="login-heading">RESET PASSWORD</h3>
+                <p style="text-align:center; color:#666; margin-bottom:1rem;">Step 1/3: Enter email to receive code.</p>
+                <div class="form-body">
+                    <div class="field input-with-icon">
+                        <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
+                        <input type="email" id="forgotEmail" name="email" placeholder="Your Email Address" required>
+                    </div>
+                    <div class="links">
+                        <a href="#" class="showLoginBtn">Back to Login</a>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Send Code</button>
+                </div>
+                <div id="forgotMessage" style="color: red; text-align: center; margin-top: 10px;"></div>
+            </form>
+
+            <form id="verifyCodeForm" class="auth-form" style="display: none;">
+                <h3 class="login-heading">VERIFY CODE</h3>
+                <p style="text-align:center; color:#666; margin-bottom:0.5rem;">Step 2/3: Enter the 6-digit code.</p>
+                
+                <div style="text-align:center; font-weight:bold; color:var(--primary); margin-bottom:1rem; font-size:1.2rem;">
+                    Time left: <span id="timerDisplay">05:00</span>
+                </div>
+
+                <div class="form-body">
+                    <div class="field input-with-icon">
+                        <img class="left-icon" src="../assets/img/password-icon.png" alt="code">
+                        <input type="text" id="verifyCodeInput" name="code" placeholder="Enter 6-Digit Code" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold;">
+                    </div>
+                    
+                    <div class="links" style="justify-content: center;">
+                        <a href="#" id="resendCodeBtn" style="color:var(--text-secondary); pointer-events: none; opacity: 0.5;">Resend Code</a>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Verify Code</button>
+                </div>
+                <div id="verifyMessage" style="color: red; text-align: center; margin-top: 10px;"></div>
+            </form>
+
+            <form id="newPasswordForm" class="auth-form" style="display: none;">
+                <h3 class="login-heading">NEW PASSWORD</h3>
+                <p style="text-align:center; color:#666; margin-bottom:1rem;">Step 3/3: Create a new password.</p>
+                <div class="form-body">
+                    <div class="field input-with-icon">
+                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <input id="newPassInput" type="password" name="password" placeholder="New Password" required>
+                        <button type="button" class="toggle-visibility" data-target="newPassInput">
+                            <img class="eye-icon" src="../assets/img/toggle-password.png" alt="show">
+                        </button>
+                    </div>
+
+                    <div class="field input-with-icon">
+                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <input id="confirmPassInput" type="password" name="confirm_password" placeholder="Confirm Password" required>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Set Password</button>
+                </div>
+                <div id="newPassMessage" style="color: red; text-align: center; margin-top: 10px;"></div>
+            </form>
+
         </aside>
     </div>
 
