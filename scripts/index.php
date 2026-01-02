@@ -98,6 +98,26 @@ if (empty($_SESSION['csrf_token'])) {
                 <div id="signupMessage" style="color: red; text-align: center; margin-top: 10px;"></div>
             </form>
 
+            <form id="signupVerifyForm" class="auth-form" style="display: none;">
+                <h3 class="login-heading">VERIFY ACCOUNT</h3>
+                <p style="text-align:center; color:#666; margin-bottom:0.5rem;">Check your email for the activation code.</p>
+                
+                <div style="text-align:center; font-weight:bold; color:var(--primary); margin-bottom:1rem; font-size:1.2rem;">
+                    Time left: <span id="signupTimerDisplay">05:00</span>
+                </div>
+
+                <div class="form-body">
+                    <div class="field input-with-icon">
+                        <img class="left-icon" src="../assets/img/password-icon.png" alt="code">
+                        <input type="text" id="signupCodeInput" name="code" placeholder="Activation Code" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold;">
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Activate Account</button>
+                </div>
+                <div id="signupVerifyMessage" style="color: red; text-align: center; margin-top: 10px;"></div>
+            </form>
+
             <form id="forgotForm" class="auth-form" style="display: none;">
                 <h3 class="login-heading">RESET PASSWORD</h3>
                 <p style="text-align:center; color:#666; margin-bottom:1rem;">Step 1/3: Enter email to receive code.</p>

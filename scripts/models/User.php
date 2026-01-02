@@ -3,31 +3,30 @@ class User {
     private $conn;
     private $table_name = "users";
 
+    // User Properties
     public $id;
     public $first_name;
     public $last_name;
     public $email;
     public $password;
     public $role;
+    public $reset_code;
+    public $reset_expires_at;
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    // Check if email exists and load user data
+    // 1. Check if email exists (Used for Login & Signup)
     public function emailExists() {
-        // Secure query using named placeholder
-        $query = "SELECT id, first_name, last_name, password, role 
+        $query = "SELECT id, first_name, last_name, password, role
                   FROM " . $this->table_name . " 
                   WHERE email = :email 
                   LIMIT 0,1";
 
         $stmt = $this->conn->prepare($query);
         
-        // Sanitize input
         $this->email = htmlspecialchars(strip_tags($this->email));
-        
-        // Bind parameter
         $stmt->bindParam(':email', $this->email);
         $stmt->execute();
 
@@ -36,17 +35,18 @@ class User {
             $this->id = $row['id'];
             $this->first_name = $row['first_name'];
             $this->last_name = $row['last_name'];
-            $this->password = $row['password']; // Stores the hash
+            $this->password = $row['password'];
             $this->role = $row['role'];
             return true;
         }
         return false;
     }
 
-    // Register new user
-    public function register() {
+    // 2. Create User (Called ONLY after Session verification)
+    public function create() {
+        $this->role = 'client';
         $query = "INSERT INTO " . $this->table_name . "
-                SET
+                  SET
                     first_name = :first_name,
                     last_name = :last_name,
                     email = :email,
@@ -56,18 +56,13 @@ class User {
 
         $stmt = $this->conn->prepare($query);
 
-        // Sanitize inputs (XSS Protection)
+        // Sanitize input
         $this->first_name = htmlspecialchars(strip_tags($this->first_name));
         $this->last_name = htmlspecialchars(strip_tags($this->last_name));
         $this->email = htmlspecialchars(strip_tags($this->email));
         
-        // Hash password (Security critical)
-        // Ensure password is hashed before saving
-        if (password_needs_rehash($this->password, PASSWORD_BCRYPT) || strlen($this->password) < 60) {
-             $this->password = password_hash($this->password, PASSWORD_BCRYPT);
-        }
-
-        // Bind parameters
+        // Password comes already hashed from Session
+        
         $stmt->bindParam(':first_name', $this->first_name);
         $stmt->bindParam(':last_name', $this->last_name);
         $stmt->bindParam(':email', $this->email);
@@ -81,18 +76,19 @@ class User {
         return false;
     }
 
+    // --- FORGOT PASSWORD METHODS ---
 
-    // --- RESET PASSWORD METHODS ---
-
-    // 1. Save Reset Token
+    // 3. Save Reset Code
     public function setResetToken($code) {
-        // Code valid for 5 minutes
         $query = "UPDATE " . $this->table_name . " 
                   SET reset_code = :code, reset_expires_at = DATE_ADD(NOW(), INTERVAL 5 MINUTE) 
                   WHERE email = :email";
 
         $stmt = $this->conn->prepare($query);
         
+        $code = htmlspecialchars(strip_tags($code));
+        $this->email = htmlspecialchars(strip_tags($this->email));
+
         $stmt->bindParam(":code", $code);
         $stmt->bindParam(":email", $this->email);
 
@@ -102,9 +98,8 @@ class User {
         return false;
     }
 
-    // 2. Verify Code and Reset Password
+    // 4. Reset Password
     public function resetPassword($code, $new_password) {
-        // Check if code matches AND is not expired
         $query = "SELECT id, reset_expires_at FROM " . $this->table_name . " 
                   WHERE email = :email AND reset_code = :code LIMIT 1";
         
@@ -115,17 +110,15 @@ class User {
 
         if($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $expiry = $row['reset_expires_at'];
 
             // Check expiry
-            if(new DateTime() > new DateTime($expiry)) {
+            if(new DateTime() > new DateTime($row['reset_expires_at'])) {
                 return "expired";
             }
 
-            // Code valid, update password
+            // Update Password
             $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
             
-            // Update password AND clear the reset code so it can't be used again
             $updateQuery = "UPDATE " . $this->table_name . " 
                             SET password = :password, reset_code = NULL, reset_expires_at = NULL 
                             WHERE email = :email";
