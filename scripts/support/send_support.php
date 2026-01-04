@@ -1,5 +1,4 @@
 <?php
-// Include PHPMailer classes manually
 require '../PHPMailer/Exception.php';
 require '../PHPMailer/PHPMailer.php';
 require '../PHPMailer/SMTP.php';
@@ -11,24 +10,25 @@ session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
-    // --- SMTP Settings ---
+    // SMTP Settings
     $smtp_host = 'smtp.gmail.com'; 
     $smtp_user = 'app.gostay@gmail.com'; 
-    $smtp_pass = 'ulqrfkilcnmucsoe';     
+    $smtp_pass = 'ulqrfkilcnmucsoe'; 
     $smtp_port = 587;
-    $admin_email = 'app.gostay@gmail.com';   
+    $admin_email = 'app.gostay@gmail.com'; 
 
-    // --- Form Data ---
+    // Inputs
     $fullname = htmlspecialchars($_POST['fullname']);
     $email_client = htmlspecialchars($_POST['email']);
-    $order_ref = htmlspecialchars($_POST['order_ref']) ?: 'N/A';
-    $phone = htmlspecialchars($_POST['phone']) ?: 'N/A';
+    $phone = htmlspecialchars($_POST['phone']); // Gets what user typed
     $problem_type = htmlspecialchars($_POST['problem_type']);
     $message = nl2br(htmlspecialchars($_POST['message']));
+    
+    $order_ref = htmlspecialchars($_POST['order_ref']); 
     $urgency = htmlspecialchars($_POST['urgency']);
     $contact_method = htmlspecialchars($_POST['contact_method']);
 
-    // --- Visual Settings ---
+    // Assets
     $primaryColor = '#7b2bd4';
     $bgColor = '#f4f7f6';
     $logoPath = '../../assets/img/logo.png'; 
@@ -36,7 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $mail = new PHPMailer(true);
 
     try {
-        // Server Configuration
         $mail->isSMTP();
         $mail->Host       = $smtp_host;
         $mail->SMTPAuth   = true;
@@ -45,75 +44,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = $smtp_port;
 
-        // Recipients
-        $mail->setFrom($smtp_user, 'GoStay Support System');
+        $mail->setFrom($smtp_user, 'GoStay Support');
         $mail->addAddress($admin_email); 
         $mail->addReplyTo($email_client, $fullname); 
 
-        // Embed Logo
         if(file_exists($logoPath)) {
             $mail->addEmbeddedImage($logoPath, 'logo_gostay'); 
         }
 
-        // Email Body (Styled)
         $mail->isHTML(true);
-        $mail->Subject = "Support Ticket: $problem_type ($fullname)";
+        $mail->Subject = "Ticket: $problem_type ($fullname)";
         
         $mail->Body = "
         <!DOCTYPE html>
         <html>
         <head>
             <style>
-                body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: $bgColor; margin: 0; padding: 0; }
-                .container { width: 100%; max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-                .header { background-color: #ffffff; padding: 30px; text-align: center; border-bottom: 1px solid #eeeeee; }
-                .content { padding: 40px 30px; color: #333333; line-height: 1.6; }
-                .info-box { background-color: #f9f9f9; border-left: 4px solid $primaryColor; padding: 15px; margin: 20px 0; border-radius: 4px; }
-                .data-row { margin-bottom: 8px; font-size: 14px; }
-                .label { font-weight: bold; color: #555; width: 120px; display: inline-block; }
-                .message-area { margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 6px; font-style: italic; color: #444; }
-                .footer { background-color: $bgColor; padding: 20px; text-align: center; font-size: 12px; color: #999999; }
+                body { font-family: 'Helvetica', sans-serif; background: $bgColor; padding: 0; margin: 0; }
+                .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 8px; overflow: hidden; }
+                .header { background: #fff; padding: 20px; text-align: center; border-bottom: 1px solid #eee; }
+                .content { padding: 30px; color: #333; }
+                .info { background: #f9f9f9; border-left: 4px solid $primaryColor; padding: 15px; margin: 20px 0; }
+                .footer { background: $bgColor; padding: 15px; text-align: center; font-size: 12px; color: #888; }
             </style>
         </head>
         <body>
             <div class='container'>
-                <div class='header'>
-                    <img src='cid:logo_gostay' alt='GoStay' style='max-width: 150px; height: auto;'>
-                </div>
+                <div class='header'><img src='cid:logo_gostay' width='120'></div>
                 <div class='content'>
-                    <h2 style='margin-top: 0; color: #333;'>New Support Request</h2>
-                    <p>Hello Admin, a new ticket has been submitted via the platform.</p>
-                    
-                    <div class='info-box'>
-                        <div class='data-row'><span class='label'>Client:</span> $fullname</div>
-                        <div class='data-row'><span class='label'>Email:</span> <a href='mailto:$email_client' style='color:$primaryColor; text-decoration:none;'>$email_client</a></div>
-                        <div class='data-row'><span class='label'>Phone:</span> $phone</div>
-                        <div class='data-row'><span class='label'>Order Ref:</span> $order_ref</div>
-                        <div class='data-row'><span class='label'>Issue Type:</span> $problem_type</div>
-                        <div class='data-row'><span class='label'>Urgency:</span> $urgency</div>
-                        <div class='data-row'><span class='label'>Contact via:</span> $contact_method</div>
+                    <h2>New Support Ticket</h2>
+                    <p><strong>From:</strong> $fullname</p>
+                    <div class='info'>
+                        Ref: $order_ref <br>
+                        Phone: $phone <br>
+                        Issue: $problem_type <br>
+                        Urgency: $urgency
                     </div>
-
-                    <p><strong>Message Description:</strong></p>
-                    <div class='message-area'>
-                        \"$message\"
-                    </div>
+                    <p><strong>Message:</strong><br>$message</p>
                 </div>
-                <div class='footer'>
-                    &copy; " . date("Y") . " GoStay System. Automated Message.
-                </div>
+                <div class='footer'>Automated Message</div>
             </div>
         </body>
         </html>";
 
-        $mail->AltBody = "New Support Request from $fullname ($email_client). Issue: $problem_type. Message: " . strip_tags($message);
+        $mail->AltBody = strip_tags($message);
 
         $mail->send();
         
-        echo "<script>alert('Support request sent successfully!'); window.location.href='../home.php';</script>";
+        header("Location: contact.php?status=success");
+        exit;
 
     } catch (Exception $e) {
-        echo "<script>alert('Error sending email: {$mail->ErrorInfo}'); window.history.back();</script>";
+        header("Location: contact.php?status=error");
+        exit;
     }
 
 } else {
