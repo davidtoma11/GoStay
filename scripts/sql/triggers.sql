@@ -1,336 +1,215 @@
-USE gostay;
+-- ==================================================
+-- 1. TABLE: ROOMS (Role & Price Validation)
+-- ==================================================
 DELIMITER $$
 
-DROP TRIGGER IF EXISTS check_room_availability_insert$$
+-- Trigger: Ensure only 'manager' or 'admin' can list a room (INSERT)
+CREATE TRIGGER validate_room_owner_role_insert
+BEFORE INSERT ON rooms
+FOR EACH ROW
+BEGIN
+    DECLARE owner_role VARCHAR(50);
+    
+    -- Get the role of the user trying to list the room
+    SELECT role INTO owner_role 
+    FROM users 
+    WHERE id = NEW.user_id;
+    
+    -- Logic: Allow ONLY 'manager' or 'admin'. Block 'client' or 'guest'.
+    IF owner_role NOT IN ('manager', 'admin') THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Security Violation: Only users with Manager or Admin role can list properties.';
+    END IF;
+    
+    -- Also validate price here to save code
+    IF NEW.price <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Room price must be greater than 0.';
+    END IF;
+END$$
 
+-- Trigger: Ensure only 'manager' or 'admin' can own a room (UPDATE)
+-- This prevents changing ownership to a simple client later
+CREATE TRIGGER validate_room_owner_role_update
+BEFORE UPDATE ON rooms
+FOR EACH ROW
+BEGIN
+    DECLARE owner_role VARCHAR(50);
+    
+    -- Check only if the user_id (owner) is changing
+    IF NEW.user_id != OLD.user_id THEN
+        SELECT role INTO owner_role 
+        FROM users 
+        WHERE id = NEW.user_id;
+        
+        IF owner_role NOT IN ('manager', 'admin') THEN
+            SIGNAL SQLSTATE '45000' 
+            SET MESSAGE_TEXT = 'Security Violation: Only users with Manager or Admin role can list properties.';
+        END IF;
+    END IF;
+    
+    -- Validate price update
+    IF NEW.price <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Room price must be greater than 0.';
+    END IF;
+END$$
+
+DELIMITER ;
+
+-- ==================================================
+-- 2. TABLE: RESERVATIONS (Availability & Dates)
+-- ==================================================
+DELIMITER $$
+
+-- Trigger: Prevent Double Booking (INSERT)
 CREATE TRIGGER check_room_availability_insert
 BEFORE INSERT ON reservations
 FOR EACH ROW
 BEGIN
-    DECLARE overlapping_reservations INT;
+    DECLARE overlapping_count INT;
     
-    SELECT COUNT(*) INTO overlapping_reservations
+    -- Check if dates overlap with any CONFIRMED or PENDING reservation
+    -- Logic: (StartA < EndB) AND (EndA > StartB) detects any overlap
+    SELECT COUNT(*) INTO overlapping_count
     FROM reservations
     WHERE room_id = NEW.room_id
-    AND status IN ('confirmed', 'pending')
+    AND status IN ('confirmed', 'pending') 
     AND (
-        (NEW.check_in BETWEEN check_in AND check_out) OR
-        (NEW.check_out BETWEEN check_in AND check_out) OR
-        (check_in BETWEEN NEW.check_in AND NEW.check_out) OR
-        (NEW.check_in <= check_in AND NEW.check_out >= check_out)
+        (NEW.check_in < check_out AND NEW.check_out > check_in)
     );
     
-    IF overlapping_reservations > 0 THEN
+    IF overlapping_count > 0 THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Room is already booked for the selected dates. Please choose different dates.';
+        SET MESSAGE_TEXT = 'Room is already booked for the selected dates.';
+    END IF;
+    
+    -- Date Logic Check
+    IF NEW.check_out <= NEW.check_in THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Check-out date must be after check-in date.';
     END IF;
 END$$
 
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS check_room_availability_update$$
-
+-- Trigger: Prevent Double Booking (UPDATE)
 CREATE TRIGGER check_room_availability_update
 BEFORE UPDATE ON reservations
 FOR EACH ROW
 BEGIN
-    DECLARE overlapping_reservations INT;
+    DECLARE overlapping_count INT;
     
+    -- Run check only if dates or room changed
     IF NEW.room_id != OLD.room_id OR NEW.check_in != OLD.check_in OR NEW.check_out != OLD.check_out THEN
-        SELECT COUNT(*) INTO overlapping_reservations
+        
+        SELECT COUNT(*) INTO overlapping_count
         FROM reservations
         WHERE room_id = NEW.room_id
         AND status IN ('confirmed', 'pending')
+        AND id != NEW.id -- Exclude current reservation from check
         AND (
-            (NEW.check_in BETWEEN check_in AND check_out) OR
-            (NEW.check_out BETWEEN check_in AND check_out) OR
-            (check_in BETWEEN NEW.check_in AND NEW.check_out) OR
-            (NEW.check_in <= check_in AND NEW.check_out >= check_out)
-        )
-        AND id != NEW.id;
+            (NEW.check_in < check_out AND NEW.check_out > check_in)
+        );
         
-        IF overlapping_reservations > 0 THEN
+        IF overlapping_count > 0 THEN
             SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Room is already booked for the selected dates. Please choose different dates.';
+            SET MESSAGE_TEXT = 'Room is already booked for the selected dates.';
         END IF;
-    END IF;
-END$$
-
-DELIMITER ;
-
--- Reservation Date Validation Triggers 
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS validate_reservation_dates_insert$$
-
-CREATE TRIGGER validate_reservation_dates_insert
-BEFORE INSERT ON reservations
-FOR EACH ROW
-BEGIN
-    -- Verify that check_out > check_in
-    IF NEW.check_out <= NEW.check_in THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Check-out date must be after check-in date.';
-    END IF;
-    
-END$$
-
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS validate_reservation_dates_update$$
-
-CREATE TRIGGER validate_reservation_dates_update
-BEFORE UPDATE ON reservations
-FOR EACH ROW
-BEGIN
-    IF NEW.check_in != OLD.check_in OR NEW.check_out != OLD.check_out THEN
+        
+        -- Date Logic Check
         IF NEW.check_out <= NEW.check_in THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Check-out date must be after check-in date.';
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Check-out date must be after check-in date.';
         END IF;
-        
     END IF;
 END$$
 
 DELIMITER ;
 
--- Review Validation Triggers
-
+-- ==================================================
+-- 3. TABLE: REVIEWS (Prevent Self-Reviews)
+-- ==================================================
 DELIMITER $$
 
-DROP TRIGGER IF EXISTS prevent_self_review_insert$$
-
+-- Trigger: Owner cannot review their own property (INSERT)
 CREATE TRIGGER prevent_self_review_insert
 BEFORE INSERT ON reviews
 FOR EACH ROW
 BEGIN
-    DECLARE hotel_owner INT;
-    DECLARE user_role VARCHAR(20);
+    DECLARE room_owner_id INT;
     
-    SELECT manager_id INTO hotel_owner 
-    FROM hotels 
-    WHERE id = NEW.hotel_id;
+    -- Find the owner of the room being reviewed
+    SELECT user_id INTO room_owner_id 
+    FROM rooms 
+    WHERE id = NEW.room_id;
     
-    SELECT role INTO user_role
-    FROM users
-    WHERE id = NEW.user_id;
-    
-    IF hotel_owner = NEW.user_id THEN
+    IF room_owner_id = NEW.user_id THEN
         SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'You cannot review your own hotel.';
+        SET MESSAGE_TEXT = 'Action denied: Property owners cannot review their own listings.';
     END IF;
-    
 END$$
 
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS prevent_self_review_update$$
-
+-- Trigger: Owner cannot review their own property (UPDATE)
 CREATE TRIGGER prevent_self_review_update
 BEFORE UPDATE ON reviews
 FOR EACH ROW
 BEGIN
-    DECLARE hotel_owner INT;
-    DECLARE user_role VARCHAR(20);
+    DECLARE room_owner_id INT;
     
-    IF NEW.user_id != OLD.user_id OR NEW.hotel_id != OLD.hotel_id THEN
-        SELECT manager_id INTO hotel_owner 
-        FROM hotels 
-        WHERE id = NEW.hotel_id;
+    IF NEW.user_id != OLD.user_id OR NEW.room_id != OLD.room_id THEN
+        SELECT user_id INTO room_owner_id 
+        FROM rooms 
+        WHERE id = NEW.room_id;
         
-        SELECT role INTO user_role
-        FROM users
-        WHERE id = NEW.user_id;
-        
-        IF hotel_owner = NEW.user_id THEN
+        IF room_owner_id = NEW.user_id THEN
             SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'You cannot review your own hotel.';
+            SET MESSAGE_TEXT = 'Action denied: Property owners cannot review their own listings.';
         END IF;
-        
     END IF;
 END$$
 
 DELIMITER ;
 
--- Hotel Rating Update Triggers
-
+-- ==================================================
+-- 5. TABLE: ROOM_PHOTOS (Single Primary Photo)
+-- ==================================================
 DELIMITER $$
 
-DROP TRIGGER IF EXISTS update_hotel_rating_insert$$
-
-CREATE TRIGGER update_hotel_rating_insert
-AFTER INSERT ON reviews
-FOR EACH ROW
-BEGIN
-    DECLARE avg_rating DECIMAL(3,2);
-    
-    SELECT AVG(rating) INTO avg_rating
-    FROM reviews 
-    WHERE hotel_id = NEW.hotel_id;
-    
-    UPDATE hotels 
-    SET rating = ROUND(COALESCE(avg_rating, 0), 2) 
-    WHERE id = NEW.hotel_id;
-END$$
-
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS update_hotel_rating_update$$
-
-CREATE TRIGGER update_hotel_rating_update
-AFTER UPDATE ON reviews
-FOR EACH ROW
-BEGIN
-    DECLARE avg_rating DECIMAL(3,2);
-    
-    IF NEW.rating != OLD.rating OR NEW.hotel_id != OLD.hotel_id THEN
-        IF NEW.hotel_id != OLD.hotel_id THEN
-            SELECT AVG(rating) INTO avg_rating
-            FROM reviews 
-            WHERE hotel_id = OLD.hotel_id;
-            
-            UPDATE hotels 
-            SET rating = ROUND(COALESCE(avg_rating, 0), 2) 
-            WHERE id = OLD.hotel_id;
-        END IF;
-        
-        SELECT AVG(rating) INTO avg_rating
-        FROM reviews 
-        WHERE hotel_id = NEW.hotel_id;
-        
-        UPDATE hotels 
-        SET rating = ROUND(COALESCE(avg_rating, 0), 2) 
-        WHERE id = NEW.hotel_id;
-    END IF;
-END$$
-
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS update_hotel_rating_delete$$
-
-CREATE TRIGGER update_hotel_rating_delete
-AFTER DELETE ON reviews
-FOR EACH ROW
-BEGIN
-    DECLARE avg_rating DECIMAL(3,2);
-    
-    SELECT AVG(rating) INTO avg_rating
-    FROM reviews 
-    WHERE hotel_id = OLD.hotel_id;
-    
-    UPDATE hotels 
-    SET rating = ROUND(COALESCE(avg_rating, 0), 2) 
-    WHERE id = OLD.hotel_id;
-END$$
-
-DELIMITER ;
-
--- Room Price Validation Triggers
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS validate_room_price_insert$$
-
-CREATE TRIGGER validate_room_price_insert
-BEFORE INSERT ON rooms
-FOR EACH ROW
-BEGIN
-    IF NEW.price <= 0 THEN
-        SIGNAL SQLSTATE '45000' 
-        SET MESSAGE_TEXT = 'Room price must be greater than 0.';
-    END IF;
-    
-END$$
-
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS validate_room_price_update$$
-
-CREATE TRIGGER validate_room_price_update
-BEFORE UPDATE ON rooms
-FOR EACH ROW
-BEGIN
-    IF NEW.price != OLD.price THEN
-        IF NEW.price <= 0 THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Room price must be greater than 0.';
-        END IF;
-        
-    END IF;
-END$$
-
-DELIMITER ;
-
--- Room Photo Management Triggers
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS ensure_single_primary_photo_insert$$
-
+-- Trigger: Auto-fix primary photo on INSERT
+-- If new photo is Primary, unset any existing Primary photo
 CREATE TRIGGER ensure_single_primary_photo_insert
 BEFORE INSERT ON room_photos
 FOR EACH ROW
 BEGIN
-    DECLARE primary_photo_count INT;
+    DECLARE primary_exists INT;
     
     IF NEW.is_primary = 1 THEN
-        SELECT COUNT(*) INTO primary_photo_count
+        SELECT COUNT(*) INTO primary_exists
         FROM room_photos 
-        WHERE room_id = NEW.room_id 
-        AND is_primary = 1;
+        WHERE room_id = NEW.room_id AND is_primary = 1;
         
-        IF primary_photo_count > 0 THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'This room already has a primary photo. Only one primary photo is allowed per room.';
+        -- Instead of error, we automatically downgrade the old primary photo
+        IF primary_exists > 0 THEN
+             UPDATE room_photos 
+             SET is_primary = 0 
+             WHERE room_id = NEW.room_id AND is_primary = 1;
         END IF;
     END IF;
 END$$
 
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS ensure_single_primary_photo_update$$
-
+-- Trigger: Auto-fix primary photo on UPDATE
 CREATE TRIGGER ensure_single_primary_photo_update
 BEFORE UPDATE ON room_photos
 FOR EACH ROW
 BEGIN
-    DECLARE primary_photo_count INT;
-    
+    -- If a photo is being promoted to Primary
     IF NEW.is_primary = 1 AND OLD.is_primary = 0 THEN
-        SELECT COUNT(*) INTO primary_photo_count
-        FROM room_photos 
+        -- Demote all other photos for this room
+        UPDATE room_photos 
+        SET is_primary = 0 
         WHERE room_id = NEW.room_id 
-        AND is_primary = 1
+        AND is_primary = 1 
         AND id != NEW.id;
-        
-        IF primary_photo_count > 0 THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'This room already has a primary photo. Only one primary photo is allowed per room.';
-        END IF;
     END IF;
 END$$
 
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS auto_set_primary_after_delete$$
-
+-- Trigger: Fallback if Primary is Deleted
+-- If the primary photo is deleted, promote the oldest remaining photo to Primary
 CREATE TRIGGER auto_set_primary_after_delete
 AFTER DELETE ON room_photos
 FOR EACH ROW
@@ -348,38 +227,6 @@ BEGIN
             WHERE room_id = OLD.room_id 
             ORDER BY id ASC 
             LIMIT 1;
-        END IF;
-    END IF;
-END$$
-
-DELIMITER ;
-
-DELIMITER $$
-
-DROP TRIGGER IF EXISTS ensure_primary_exists_on_update$$
-
-CREATE TRIGGER ensure_primary_exists_on_update
-BEFORE UPDATE ON room_photos
-FOR EACH ROW
-BEGIN
-    DECLARE primary_photo_count INT;
-    DECLARE total_photos INT;
-    
-    IF NEW.is_primary = 0 AND OLD.is_primary = 1 THEN
-        SELECT COUNT(*) INTO primary_photo_count
-        FROM room_photos 
-        WHERE room_id = OLD.room_id 
-        AND is_primary = 1
-        AND id != OLD.id;
-        
-        SELECT COUNT(*) INTO total_photos
-        FROM room_photos 
-        WHERE room_id = OLD.room_id
-        AND id != OLD.id;
-        
-        IF primary_photo_count = 0 AND total_photos > 0 THEN
-            SIGNAL SQLSTATE '45000' 
-            SET MESSAGE_TEXT = 'Cannot remove primary status. This is the only primary photo for the room. Set another photo as primary first.';
         END IF;
     END IF;
 END$$

@@ -44,14 +44,7 @@ if(!empty($data->email) && !empty($data->password)) {
             $_SESSION['role'] = $user->role; 
             $_SESSION['user_name'] = $user->first_name . ' ' . $user->last_name;
             
-            $redirect = "";
-            
-            if($user->role === 'admin') {
-                // Admins go to the crud hub
-                $redirect = "crud/hub.php"; 
-            } else {
-                $redirect = "role_landing.php"; 
-            }
+            $redirect = "home.php"; 
 
             echo json_encode([
                 "success" => true, 

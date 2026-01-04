@@ -91,11 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const original = btn.textContent;
             btn.textContent = 'Processing...'; btn.disabled = true;
 
+            // MODIFICARE: Preluam token-ul din input-ul ascuns
+            const csrfTokenInput = document.getElementById('csrf_token_input');
+            const csrfTokenValue = csrfTokenInput ? csrfTokenInput.value : '';
+
             fetch('auth/login.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     email: document.getElementById('loginEmail').value, 
-                    password: document.getElementById('loginPassword').value 
+                    password: document.getElementById('loginPassword').value,
+                    csrf_token: csrfTokenValue // MODIFICARE: Trimitem token-ul
                 })
             })
             .then(r => r.json())

@@ -3,7 +3,7 @@ session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php");
     exit;
-}
+}   
 
 require_once '../config/database.php';
 $database = new Database();
@@ -31,7 +31,7 @@ $db = $database->getConnection();
                 <p class="crud-subtitle">Manage platform efficiently</p>
             </div>
             <div class="user-info">
-                Welcome, <strong><?php echo htmlspecialchars($_SESSION['user_name']); ?></strong>
+                Welcome, <strong><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></strong>
                 <a href="../dashboard.php" class="btn btn-outline">← Back to Dashboard</a>
                 <a href="../auth/logout.php" class="btn btn-danger">Logout</a>
             </div>
@@ -40,14 +40,12 @@ $db = $database->getConnection();
         <div class="crud-grid">
             <div class="crud-card">
                 <div class="card-icon">
-                    <img src="../../assets/img/crud-hub-icons/users.png" alt="Users Management">
+                    <img src="../../assets/img/crud-hub-icons/users.png" alt="Users">
                 </div>
-                <h3>Users Management</h3>
-                <p>Manage all system users and permissions</p>
+                <h3>Users</h3>
+                <p>Manage admins, managers & clients</p>
                 <div class="card-stats">
-                    <?php
-                    $user_count = $db->query("SELECT COUNT(*) as count FROM users")->fetch()['count'];
-                    ?>
+                    <?php $user_count = $db->query("SELECT COUNT(*) as count FROM users")->fetch()['count']; ?>
                     <span class="stat"><?php echo $user_count; ?> users</span>
                 </div>
                 <a href="operations.php?table=users" class="btn btn-primary">Manage Users</a>
@@ -55,29 +53,25 @@ $db = $database->getConnection();
 
             <div class="crud-card">
                 <div class="card-icon">
-                    <img src="../../assets/img/crud-hub-icons/hotels.png" alt="Hotels Management">
+                    <img src="../../assets/img/crud-hub-icons/hotels.png" alt="Cities"> 
                 </div>
-                <h3>Hotels Management</h3>
-                <p>Manage hotels and properties</p>
+                <h3>Cities</h3>
+                <p>Manage available locations</p>
                 <div class="card-stats">
-                    <?php
-                    $hotel_count = $db->query("SELECT COUNT(*) as count FROM hotels")->fetch()['count'];
-                    ?>
-                    <span class="stat"><?php echo $hotel_count; ?> hotels</span>
+                    <?php $city_count = $db->query("SELECT COUNT(*) as count FROM cities")->fetch()['count']; ?>
+                    <span class="stat"><?php echo $city_count; ?> cities</span>
                 </div>
-                <a href="operations.php?table=hotels" class="btn btn-primary">Manage Hotels</a>
+                <a href="operations.php?table=cities" class="btn btn-primary">Manage Cities</a>
             </div>
 
             <div class="crud-card">
                 <div class="card-icon">
-                    <img src="../../assets/img/crud-hub-icons/rooms.png" alt="Rooms Management">
+                    <img src="../../assets/img/crud-hub-icons/rooms.png" alt="Rooms">
                 </div>
-                <h3>Rooms Management</h3>
-                <p>Manage hotel rooms and pricing</p>
+                <h3>Rooms</h3>
+                <p>Manage listings & details</p>
                 <div class="card-stats">
-                    <?php
-                    $room_count = $db->query("SELECT COUNT(*) as count FROM rooms")->fetch()['count'];
-                    ?>
+                    <?php $room_count = $db->query("SELECT COUNT(*) as count FROM rooms")->fetch()['count']; ?>
                     <span class="stat"><?php echo $room_count; ?> rooms</span>
                 </div>
                 <a href="operations.php?table=rooms" class="btn btn-primary">Manage Rooms</a>
@@ -85,14 +79,25 @@ $db = $database->getConnection();
 
             <div class="crud-card">
                 <div class="card-icon">
-                    <img src="../../assets/img/crud-hub-icons/photos.png" alt="Room Photos">
+                    <img src="../../assets/img/crud-hub-icons/rooms.png" alt="Facilities">
                 </div>
-                <h3>Photos Management</h3>
-                <p>Manage room photos and galleries</p>
+                <h3>Facilities</h3>
+                <p>Manage room amenities</p>
                 <div class="card-stats">
-                    <?php
-                    $photo_count = $db->query("SELECT COUNT(*) as count FROM room_photos")->fetch()['count'];
-                    ?>
+                    <?php $fac_count = $db->query("SELECT COUNT(*) as count FROM facilities")->fetch()['count']; ?>
+                    <span class="stat"><?php echo $fac_count; ?> records</span>
+                </div>
+                <a href="operations.php?table=facilities" class="btn btn-primary">Manage Facilities</a>
+            </div>
+
+            <div class="crud-card">
+                <div class="card-icon">
+                    <img src="../../assets/img/crud-hub-icons/photos.png" alt="Photos">
+                </div>
+                <h3>Photos</h3>
+                <p>Manage room galleries</p>
+                <div class="card-stats">
+                    <?php $photo_count = $db->query("SELECT COUNT(*) as count FROM room_photos")->fetch()['count']; ?>
                     <span class="stat"><?php echo $photo_count; ?> photos</span>
                 </div>
                 <a href="operations.php?table=room_photos" class="btn btn-primary">Manage Photos</a>
@@ -102,27 +107,23 @@ $db = $database->getConnection();
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/reservations.png" alt="Reservations">
                 </div>
-                <h3>Reservations Management</h3>
+                <h3>Reservations</h3>
                 <p>Manage bookings</p>
                 <div class="card-stats">
-                    <?php
-                    $res_count = $db->query("SELECT COUNT(*) as count FROM reservations")->fetch()['count'];
-                    ?>
-                    <span class="stat"><?php echo $res_count; ?> reservations</span>
+                    <?php $res_count = $db->query("SELECT COUNT(*) as count FROM reservations")->fetch()['count']; ?>
+                    <span class="stat"><?php echo $res_count; ?> bookings</span>
                 </div>
                 <a href="operations.php?table=reservations" class="btn btn-primary">Manage Reservations</a>
             </div>
 
             <div class="crud-card">
                 <div class="card-icon">
-                    <img src="../../assets/img/crud-hub-icons/reviews.png" alt="Reviews Management">
+                    <img src="../../assets/img/crud-hub-icons/reviews.png" alt="Reviews">
                 </div>
-                <h3>Reviews Management</h3>
-                <p>Manage user reviews and ratings</p>
+                <h3>Reviews</h3>
+                <p>Manage feedback</p>
                 <div class="card-stats">
-                    <?php
-                    $review_count = $db->query("SELECT COUNT(*) as count FROM reviews")->fetch()['count'];
-                    ?>
+                    <?php $review_count = $db->query("SELECT COUNT(*) as count FROM reviews")->fetch()['count']; ?>
                     <span class="stat"><?php echo $review_count; ?> reviews</span>
                 </div>
                 <a href="operations.php?table=reviews" class="btn btn-primary">Manage Reviews</a>
@@ -132,12 +133,10 @@ $db = $database->getConnection();
                 <div class="card-icon">
                     <img src="../../assets/img/crud-hub-icons/messages.png" alt="Messages">
                 </div>
-                <h3>Messages Management</h3>
-                <p>View and manage user messages</p>
+                <h3>Messages</h3>
+                <p>View user messages</p>
                 <div class="card-stats">
-                    <?php
-                    $msg_count = $db->query("SELECT COUNT(*) as count FROM messages")->fetch()['count'];
-                    ?>
+                    <?php $msg_count = $db->query("SELECT COUNT(*) as count FROM messages")->fetch()['count']; ?>
                     <span class="stat"><?php echo $msg_count; ?> messages</span>
                 </div>
                 <a href="operations.php?table=messages" class="btn btn-primary">View Messages</a>
@@ -145,5 +144,4 @@ $db = $database->getConnection();
         </div>
     </div>
 </body>
-
 </html>

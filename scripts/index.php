@@ -14,10 +14,6 @@ if (empty($_SESSION['csrf_token'])) {
     <link rel="stylesheet" href="../styles/login.css">
     
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-    <script>
-        const csrfToken = "<?php echo $_SESSION['csrf_token']; ?>";
-    </script>
 </head>
 
 <body>
@@ -33,6 +29,9 @@ if (empty($_SESSION['csrf_token'])) {
             
             <form id="loginForm" class="auth-form active">
                 <h3 class="login-heading">USER LOGIN</h3>
+                
+                <input type="hidden" id="csrf_token_input" value="<?php echo $_SESSION['csrf_token']; ?>">
+                
                 <div class="form-body">
                     <div class="field input-with-icon">
                         <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
