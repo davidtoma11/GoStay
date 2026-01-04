@@ -143,7 +143,7 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <h3>Need help with your booking?</h3>
                     <p>Our concierge team is here for you.</p>
                 </div>
-                <a href="contact.php" class="btn teaser-btn">Contact Support</a>
+                <a href="support/contact.php" class="btn teaser-btn">Contact Support</a>
             </div>
         </section>
 
