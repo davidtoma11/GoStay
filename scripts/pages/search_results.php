@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Room.php'; // New Requirement
 require_once __DIR__ . '/../utils/weather_logic.php';
+include_once '../utils/tracker.php';
 
 $database = new Database();
 $conn = $database->getConnection();

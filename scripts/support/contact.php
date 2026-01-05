@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Database Connection
 require_once '..//config/database.php';
+include_once '../utils/tracker.php';
 $database = new Database();
 $db = $database->getConnection();
 

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
+include_once '../utils/tracker.php';
 
 // Security Check
 if (!isset($_SESSION['user_id'])) {
@@ -22,6 +23,7 @@ $is_manager = ($user && ($user['role'] === 'manager' || $user['role'] === 'admin
 if (!$is_manager): ?>
     <!DOCTYPE html>
     <html lang="en">
+
     <head>
         <meta charset="UTF-8">
         <title>Access Denied - GoStay</title>
@@ -29,6 +31,7 @@ if (!$is_manager): ?>
         <link rel="stylesheet" href="../styles/search_results.css">
         <link rel="stylesheet" href="../styles/manager.css">
     </head>
+
     <body class="denied-body">
         <div class="denied-card">
             <div class="lock-icon"><i class="fa-solid fa-shield-halved"></i></div>
@@ -40,12 +43,14 @@ if (!$is_manager): ?>
             </div>
         </div>
     </body>
+
     </html>
-<?php exit; endif;
+<?php exit;
+endif;
 
-// --- DATA FETCHING (FILTERED BY LOGGED IN MANAGER) ---
 
-// 1. Stats - Only for rooms owned by this manager
+
+// Stats - Only for rooms owned by this manager
 $stmt_rev = $db->prepare("SELECT SUM(res.total_price) 
                           FROM reservations res 
                           JOIN rooms r ON res.room_id = r.id 
@@ -53,7 +58,7 @@ $stmt_rev = $db->prepare("SELECT SUM(res.total_price)
 $stmt_rev->execute([$current_manager_id]);
 $total_revenue = $stmt_rev->fetchColumn() ?: 0;
 
-// 2. Pending Reservations - Only for rooms owned by this manager
+// Pending Reservations - Only for rooms owned by this manager
 $stmt_pending = $db->prepare("
     SELECT res.*, r.name as room_name, u.first_name, u.last_name 
     FROM reservations res
@@ -65,7 +70,7 @@ $stmt_pending = $db->prepare("
 $stmt_pending->execute([$current_manager_id]);
 $pending_res = $stmt_pending->fetchAll(PDO::FETCH_ASSOC);
 
-// 3. Upcoming Stays - Only for rooms owned by this manager
+// Upcoming Stays - Only for rooms owned by this manager
 $stmt_upcoming = $db->prepare("
     SELECT res.*, r.name as room_name, u.first_name, u.last_name 
     FROM reservations res
@@ -77,7 +82,7 @@ $stmt_upcoming = $db->prepare("
 $stmt_upcoming->execute([$current_manager_id]);
 $upcoming_res = $stmt_upcoming->fetchAll(PDO::FETCH_ASSOC);
 
-// 4. Properties - Only those owned by this manager
+// Properties - Only those owned by this manager
 $stmt_rooms = $db->prepare("
     SELECT r.*, c.name as city_name, 
     (SELECT photo_url FROM room_photos rp WHERE rp.room_id = r.id ORDER BY is_primary DESC LIMIT 1) as main_photo
@@ -89,7 +94,7 @@ $stmt_rooms = $db->prepare("
 $stmt_rooms->execute([$current_manager_id]);
 $rooms = $stmt_rooms->fetchAll(PDO::FETCH_ASSOC);
 
-// 5. Latest Reviews - Only for rooms owned by this manager
+// Latest Reviews - Only for rooms owned by this manager
 $stmt_revs = $db->prepare("
     SELECT rev.*, u.first_name, u.last_name, r.name as room_name
     FROM reviews rev
@@ -101,7 +106,7 @@ $stmt_revs = $db->prepare("
 $stmt_revs->execute([$current_manager_id]);
 $reviews = $stmt_revs->fetchAll(PDO::FETCH_ASSOC);
 
-// 6. Master Booked Dates - Only for rooms owned by this manager
+// Master Booked Dates - Only for rooms owned by this manager
 $stmt_all_booked = $db->prepare("SELECT res.room_id, res.check_in, res.check_out 
                                  FROM reservations res 
                                  JOIN rooms r ON res.room_id = r.id 
@@ -117,6 +122,7 @@ foreach ($all_booked_data as $res) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -127,7 +133,7 @@ foreach ($all_booked_data as $res) {
     <link rel="stylesheet" href="../styles/search_results.css">
     <link rel="stylesheet" href="../styles/manager.css">
     <link rel="stylesheet" href="../styles/footer.css">
-    
+
     <script>
         const BOOKED_DATES_MASTER = <?php echo json_encode($booked_by_room); ?>;
     </script>
@@ -171,6 +177,7 @@ foreach ($all_booked_data as $res) {
                 </div>
             </div>
         </div>
+
 
         <div class="layout-grid">
             <div class="main-manager-content">
@@ -325,6 +332,7 @@ foreach ($all_booked_data as $res) {
         </div>
     </div>
 
+
     <div id="managerActionModal" class="res-overlay" style="display: none;">
         <div class="res-overlay-content modal-compact">
             <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -349,4 +357,5 @@ foreach ($all_booked_data as $res) {
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="../js/manager_dashboard.js"></script>
 </body>
+
 </html>

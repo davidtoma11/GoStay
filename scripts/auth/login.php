@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 
 include_once '../config/database.php';
 include_once '../models/User.php';
+include_once '../utils/tracker.php';
 
 // HTTP Request Spoofing (Allow only POST requests)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

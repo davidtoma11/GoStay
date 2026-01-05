@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
+include_once '../utils/tracker.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
