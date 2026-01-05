@@ -393,3 +393,30 @@
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
+
+.res-status-msg {
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    animation: fadeInDown 0.3s ease;
+}
+
+.res-status-msg.success {
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+    border: 1px solid rgba(39, 174, 96, 0.3);
+}
+
+.res-status-msg.error {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

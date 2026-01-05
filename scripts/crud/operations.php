@@ -195,7 +195,7 @@ if ($action === 'edit' && $id) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage <?php echo ucfirst($table); ?> - GoStay</title>
-    <link rel="stylesheet" href="../../styles/crud.css">
+    <link rel="stylesheet" href="../styles/crud.css">
     <style>
         .checkbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
         .checkbox-item { display: flex; align-items: center; background: #f8f9fa; padding: 5px 10px; border-radius: 4px; }

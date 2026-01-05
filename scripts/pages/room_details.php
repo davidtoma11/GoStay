@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Security check: Redirect if not authenticated
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
@@ -14,7 +13,6 @@ $database = new Database();
 $conn = $database->getConnection();
 $roomModel = new Room($conn);
 
-// Get and sanitize room ID
 $room_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $room = $roomModel->getDetails($room_id);
 
@@ -23,20 +21,16 @@ if (!$room) {
     exit;
 }
 
-// Fetch all photos for the slider
 $stmt_photos = $conn->prepare("SELECT photo_url FROM room_photos WHERE room_id = ? ORDER BY is_primary DESC");
 $stmt_photos->execute([$room_id]);
 $photos = $stmt_photos->fetchAll(PDO::FETCH_ASSOC);
 
-// Get available amenities data
 $facilities_data = $roomModel->getFacilities($room_id);
 
-// Get booked ranges for calendar disabling
 $stmt_booked = $conn->prepare("SELECT check_in, check_out FROM reservations WHERE room_id = ? AND status IN ('confirmed', 'pending')");
 $stmt_booked->execute([$room_id]);
 $booked_dates = $stmt_booked->fetchAll(PDO::FETCH_ASSOC);
 
-// Fetch reviews using first_name and last_name from users table
 $stmt_reviews = $conn->prepare("
     SELECT r.*, u.first_name, u.last_name 
     FROM reviews r 
@@ -47,12 +41,10 @@ $stmt_reviews = $conn->prepare("
 $stmt_reviews->execute([$room_id]);
 $reviews = $stmt_reviews->fetchAll(PDO::FETCH_ASSOC);
 
-// Calculate average rating
 $total_rating = 0;
 foreach ($reviews as $rev) { $total_rating += $rev['rating']; }
 $avg_rating = count($reviews) > 0 ? round($total_rating / count($reviews), 1) : 0;
 
-// Prepare address and map URL
 $real_address = ($room['address'] ?? "12 Sample Street") . ", " . $room['city_name'] . ", Romania";
 $map_url = "https://maps.google.com/maps?q=" . urlencode($real_address) . "&t=&z=15&ie=UTF8&iwloc=&output=embed";
 
@@ -91,21 +83,17 @@ $facilities_map = [
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($room['name']); ?> - GoStay Premium</title>
-
     <link rel="stylesheet" href="../styles/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
     <link rel="stylesheet" href="../styles/search_results.css">
     <link rel="stylesheet" href="../styles/room_details.css">
 </head>
-
 <body class="details-page-body">
 
     <nav class="results-nav">
@@ -113,7 +101,7 @@ $facilities_map = [
             <a href="search_results.php?city_id=<?php echo $room['city_id']; ?>" class="nav-logo"></a>
             <div class="nav-header-info">
                 <h2 class="room-nav-title"><?php echo htmlspecialchars($room['name']); ?></h2>
-                <div class="nav-sub-info">
+                <div class="nav-header-meta">
                     <span class="nav-rating"><i class="fa-solid fa-star"></i> <?php echo $avg_rating; ?> (<?php echo count($reviews); ?> reviews)</span>
                     <span class="nav-divider">|</span>
                     <span class="nav-fast-booking"><i class="fa-solid fa-bolt"></i> Fast Booking</span>
@@ -148,7 +136,7 @@ $facilities_map = [
                 <div class="booking-card-premium">
                     <div class="price-header-row">
                         <div class="price-main">
-                            <span class="vibrant-price" id="basePrice" data-unit-price="<?php echo $room['price']; ?>">
+                            <span class="vibrant-price">
                                 <?php echo number_format($room['price']); ?> RON
                             </span>
                             <span class="unit">/ night</span>
@@ -162,23 +150,11 @@ $facilities_map = [
                     </div>
 
                     <div id="bookingSummary" class="booking-summary-box" style="display:none;">
-                        <div class="calc-row">
-                            <span id="nightsCalc">0 nights</span>
-                            <span id="subtotalVal">0 RON</span>
-                        </div>
-                        <div class="calc-row">
-                            <span>Service fee (5%)</span> 
-                            <span id="serviceFeeVal">0 RON</span>
-                        </div>
-                        <div class="calc-row discount">
-                            <span>Discount (10%)</span>
-                            <span id="discountVal">-0 RON</span>
-                        </div>
+                        <div class="calc-row"><span id="nightsCalc">0 nights</span><span id="subtotalVal">0 RON</span></div>
+                        <div class="calc-row"><span>Service fee (5%)</span><span id="serviceFeeVal">0 RON</span></div>
+                        <div class="calc-row discount"><span>Discount (10%)</span><span id="discountVal">-0 RON</span></div>
                         <div class="divider-summary"></div>
-                        <div class="calc-row total">
-                            <span>Total Cost:</span>
-                            <span id="totalVal">0 RON</span>
-                        </div>
+                        <div class="calc-row total"><span>Total Cost:</span><span id="totalVal">0 RON</span></div>
                     </div>
 
                     <button class="btn" id="reserveBtn" disabled>Check Availability</button>
@@ -200,9 +176,7 @@ $facilities_map = [
                             <div class="feature-item <?php echo $is_available ? 'available' : 'unavailable'; ?>">
                                 <i class="fa-solid <?php echo $f['icon']; ?>"></i>
                                 <span><?php echo $f['label']; ?></span>
-                                <?php if (!$is_available): ?>
-                                    <i class="fa-solid fa-xmark status-icon"></i>
-                                <?php endif; ?>
+                                <?php if (!$is_available): ?><i class="fa-solid fa-xmark status-icon"></i><?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -221,9 +195,7 @@ $facilities_map = [
                                 <div class="review-card-mini">
                                     <div class="rev-header">
                                         <strong><?php echo htmlspecialchars($rev['first_name'] . ' ' . $rev['last_name']); ?></strong>
-                                        <span class="rev-stars">
-                                            <?php for($i=0; $i < $rev['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
-                                        </span>
+                                        <span class="rev-stars"><?php for($i=0; $i < $rev['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?></span>
                                     </div>
                                     <p class="rev-comment"><?php echo htmlspecialchars($rev['comment']); ?></p>
                                     <small class="rev-date"><?php echo date('M d, Y', strtotime($rev['created_at'])); ?></small>
@@ -244,59 +216,19 @@ $facilities_map = [
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        let slideIndex = 0;
-        const slides = document.querySelectorAll('.slide');
-
-        function moveSlide(n) {
-            if (slides.length === 0) return;
-            slides[slideIndex].classList.remove('active');
-            slideIndex = (slideIndex + n + slides.length) % slides.length;
-            slides[slideIndex].classList.add('active');
-        }
-
-        const bookedRanges = [
-            <?php foreach ($booked_dates as $r): ?> {
-                    from: "<?php echo $r['check_in']; ?>",
-                    to: "<?php echo $r['check_out']; ?>"
-                },
-            <?php endforeach; ?>
-        ];
-
-        flatpickr("#inlineCalendar", {
-            inline: true,
-            mode: "range",
-            minDate: "today",
-            dateFormat: "Y-m-d",
-            disable: bookedRanges,
-            onChange: function(selectedDates) {
-                const btn = document.getElementById('reserveBtn');
-                const summary = document.getElementById('bookingSummary');
-                if (selectedDates.length === 2) {
-                    const diff = Math.ceil(Math.abs(selectedDates[1] - selectedDates[0]) / (86400000));
-                    const price = <?php echo $room['price']; ?>;
-                    const subtotal = diff * price;
-                    const serviceFee = subtotal * 0.05;
-                    const discount = subtotal * 0.10;
-                    const finalTotal = subtotal + serviceFee - discount;
-
-                    document.getElementById('nightsCalc').innerText = diff + " nights";
-                    document.getElementById('subtotalVal').innerText = subtotal.toLocaleString() + " RON";
-                    document.getElementById('serviceFeeVal').innerText = serviceFee.toLocaleString() + " RON";
-                    document.getElementById('discountVal').innerText = "-" + discount.toLocaleString() + " RON";
-                    document.getElementById('totalVal').innerText = finalTotal.toLocaleString() + " RON";
-
-                    summary.style.display = 'block';
-                    btn.disabled = false;
-                    btn.innerText = "RESERVE NOW";
-                } else {
-                    summary.style.display = 'none';
-                    btn.disabled = true;
-                }
-            }
-        });
+        const ROOM_CONF = {
+            id: <?php echo $room_id; ?>,
+            price: <?php echo $room['price']; ?>,
+            bookedDates: [
+                <?php foreach ($booked_dates as $r): ?>
+                    { from: "<?php echo $r['check_in']; ?>", to: "<?php echo $r['check_out']; ?>" },
+                <?php endforeach; ?>
+            ]
+        };
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../js/room_details.js"></script>
     <?php include '../utils/includes/footer.php'; ?>
 </body>
 </html>
