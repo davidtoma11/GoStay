@@ -2,10 +2,10 @@
 session_start();
 require_once __DIR__ . '/../config/database.php';
 
-// Security: Check session
-if (!isset($_SESSION['user_id'])) { 
-    header("Location: ../pages/index.php"); 
-    exit; 
+// Security: Check if manager is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../pages/index.php");
+    exit;
 }
 
 $database = new Database();
@@ -18,33 +18,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db->beginTransaction();
 
-        // 1. Insert room data
+        // Insert room data - automatically linked to logged in user
         $stmt = $db->prepare("INSERT INTO rooms (user_id, city_id, name, description, address, price, capacity, bedrooms, bathrooms, check_in_time, check_out_time) 
                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
-            $_SESSION['user_id'], $_POST['city_id'], $_POST['name'], $_POST['description'], 
-            $_POST['address'], $_POST['price'], $_POST['capacity'], $_POST['bedrooms'], 
-            $_POST['bathrooms'], $_POST['check_in_time'], $_POST['check_out_time']
+            $_SESSION['user_id'],
+            $_POST['city_id'],
+            $_POST['name'],
+            $_POST['description'],
+            $_POST['address'],
+            $_POST['price'],
+            $_POST['capacity'],
+            $_POST['bedrooms'],
+            $_POST['bathrooms'],
+            $_POST['check_in_time'],
+            $_POST['check_out_time']
         ]);
         $roomId = $db->lastInsertId();
 
-        // 2. Insert facilities data
+        // Insert facilities data
         $fac_fields = [
-            'has_wifi', 'has_workspace', 'has_ac', 'has_heating', 'has_parking', 'has_self_checkin', 
-            'has_elevator', 'has_kitchen', 'has_fridge', 'has_microwave', 'has_cooking_basics', 
-            'has_dishes', 'has_stove', 'has_coffee_maker', 'has_washing_machine', 'has_dryer', 
-            'has_iron', 'has_hairdryer', 'has_hot_water', 'has_essentials', 'has_tv', 'has_balcony', 
-            'has_pool', 'has_jacuzzi', 'has_smoke_alarm', 'has_first_aid', 'is_pet_friendly', 'is_smoking_allowed'
+            'has_wifi',
+            'has_workspace',
+            'has_ac',
+            'has_heating',
+            'has_parking',
+            'has_self_checkin',
+            'has_elevator',
+            'has_kitchen',
+            'has_fridge',
+            'has_microwave',
+            'has_cooking_basics',
+            'has_dishes',
+            'has_stove',
+            'has_coffee_maker',
+            'has_washing_machine',
+            'has_dryer',
+            'has_iron',
+            'has_hairdryer',
+            'has_hot_water',
+            'has_essentials',
+            'has_tv',
+            'has_balcony',
+            'has_pool',
+            'has_jacuzzi',
+            'has_smoke_alarm',
+            'has_first_aid',
+            'is_pet_friendly',
+            'is_smoking_allowed'
         ];
 
         $placeholders = str_repeat('?,', count($fac_fields)) . '?';
         $sql_fac = "INSERT INTO facilities (room_id, " . implode(',', $fac_fields) . ") VALUES ($placeholders)";
-        
+
         $fac_values = [$roomId];
-        foreach ($fac_fields as $f) { $fac_values[] = isset($_POST[$f]) ? 1 : 0; }
+        foreach ($fac_fields as $f) {
+            $fac_values[] = isset($_POST[$f]) ? 1 : 0;
+        }
         $db->prepare($sql_fac)->execute($fac_values);
 
-        // 3. Process photo uploads
+        // Process photo uploads
         if (!empty($_FILES['photos']['name'][0])) {
             $upload_dir = '../../assets/uploads/rooms/';
             if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
@@ -55,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db_path = 'uploads/rooms/' . $file_name;
 
                 if (move_uploaded_file($tmp_name, $target_file)) {
-                    $is_primary = ($key === 0) ? 1 : 0; 
+                    $is_primary = ($key === 0) ? 1 : 0;
                     $stmt_img = $db->prepare("INSERT INTO room_photos (room_id, photo_url, is_primary) VALUES (?, ?, ?)");
                     $stmt_img->execute([$roomId, $db_path, $is_primary]);
                 }
@@ -74,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Add Property - GoStay</title>
@@ -82,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../styles/search_results.css">
     <link rel="stylesheet" href="../styles/footer.css">
 </head>
+
 <body style="background: #f4f7ff;">
     <nav class="results-nav">
         <div class="nav-left">
@@ -106,7 +141,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="input-group">
                             <label>City</label>
                             <select name="city_id" required>
-                                <?php foreach($cities as $c): echo "<option value='{$c['id']}'>{$c['name']}</option>"; endforeach; ?>
+                                <?php foreach ($cities as $c): echo "<option value='{$c['id']}'>{$c['name']}</option>";
+                                endforeach; ?>
                             </select>
                         </div>
                         <div class="input-group">
@@ -124,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2 class="form-section-title">Description</h2>
                     <textarea name="description" rows="4" style="width:100%; border-radius:15px; padding:15px; border:1px solid #ddd;" placeholder="Describe your property..."></textarea>
 
-                    <h2 class="form-section-title">Photos (drag and drop)</h2>
+                    <h2 class="form-section-title">Photos (Drag and drop)</h2>
                     <div class="upload-zone" id="dropZone">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
                         <p>Click or drag photos here (First photo will be the cover)</p>
@@ -186,10 +222,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const previewContainer = document.getElementById('previewContainer');
-
         dropZone.onclick = () => fileInput.click();
         fileInput.onchange = (e) => handleFiles(e.target.files);
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        };
         dropZone.ondragleave = () => dropZone.classList.remove('dragover');
         dropZone.ondrop = (e) => {
             e.preventDefault();
@@ -213,4 +251,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </script>
 </body>
+
 </html>

@@ -40,12 +40,8 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav class="main-nav">
         <div class="nav-icons">
             <a href="manager_dashboard.php" title="Manager"><i class="fa-solid fa-crown"></i></a>
-            <a href="<?php echo ($_SESSION['role'] === 'admin') ? '../admin/hub.php' : '../profile.php'; ?>" title="Profile">
-                <i class="fa-solid fa-user"></i>
-            </a>
-            <a href="#" title="Trending"><i class="fa-solid fa-fire"></i></a>
-            <a href="#" title="My Bookings"><i class="fa-solid fa-calendar-days"></i></a>
-            <a href="#" title="Messages"><i class="fa-solid fa-comment"></i></a>
+            <a href="reservations_dashboard.php" title="My Bookings"><i class="fa-solid fa-calendar-days"></i></a>
+            <a href="messages.php" title="Messages"><i class="fa-solid fa-comment"></i></a>
             <a href="../auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     </nav>

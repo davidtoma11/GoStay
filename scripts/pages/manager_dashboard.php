@@ -10,10 +10,11 @@ if (!isset($_SESSION['user_id'])) {
 
 $database = new Database();
 $db = $database->getConnection();
+$current_manager_id = $_SESSION['user_id'];
 
 // Check Permissions
 $stmt_user = $db->prepare("SELECT role FROM users WHERE id = ?");
-$stmt_user->execute([$_SESSION['user_id']]);
+$stmt_user->execute([$current_manager_id]);
 $user = $stmt_user->fetch(PDO::FETCH_ASSOC);
 
 $is_manager = ($user && ($user['role'] === 'manager' || $user['role'] === 'admin'));
@@ -35,64 +36,79 @@ if (!$is_manager): ?>
             <p>You do not have the required permissions to view this management console.</p>
             <div class="denied-actions">
                 <a href="home.php" class="btn">Return Home</a>
-                <a href="support_forum.php" class="btn support-btn">Support Forum</a>
+                <a href="../support/contact.php" class="btn support-btn">Support Forum</a>
             </div>
         </div>
     </body>
     </html>
 <?php exit; endif;
 
-// --- DATA FETCHING ---
+// --- DATA FETCHING (FILTERED BY LOGGED IN MANAGER) ---
 
-// 1. Stats
-$total_revenue = $db->query("SELECT SUM(total_price) FROM reservations WHERE status IN ('confirmed', 'completed')")->fetchColumn() ?: 0;
-$confirmed_count = $db->query("SELECT COUNT(*) FROM reservations WHERE status = 'confirmed'")->fetchColumn();
+// 1. Stats - Only for rooms owned by this manager
+$stmt_rev = $db->prepare("SELECT SUM(res.total_price) 
+                          FROM reservations res 
+                          JOIN rooms r ON res.room_id = r.id 
+                          WHERE r.user_id = ? AND res.status IN ('confirmed', 'completed')");
+$stmt_rev->execute([$current_manager_id]);
+$total_revenue = $stmt_rev->fetchColumn() ?: 0;
 
-// 2. Pending Reservations
-$stmt_pending = $db->query("
+// 2. Pending Reservations - Only for rooms owned by this manager
+$stmt_pending = $db->prepare("
     SELECT res.*, r.name as room_name, u.first_name, u.last_name 
     FROM reservations res
     JOIN rooms r ON res.room_id = r.id
     JOIN users u ON res.user_id = u.id
-    WHERE res.status = 'pending'
+    WHERE r.user_id = ? AND res.status = 'pending'
     ORDER BY res.created_at DESC
 ");
+$stmt_pending->execute([$current_manager_id]);
 $pending_res = $stmt_pending->fetchAll(PDO::FETCH_ASSOC);
 
-// 3. Upcoming Stays (Confirmed)
-$stmt_upcoming = $db->query("
+// 3. Upcoming Stays - Only for rooms owned by this manager
+$stmt_upcoming = $db->prepare("
     SELECT res.*, r.name as room_name, u.first_name, u.last_name 
     FROM reservations res
     JOIN rooms r ON res.room_id = r.id
     JOIN users u ON res.user_id = u.id
-    WHERE res.status = 'confirmed'
+    WHERE r.user_id = ? AND res.status = 'confirmed'
     ORDER BY res.check_in ASC
 ");
+$stmt_upcoming->execute([$current_manager_id]);
 $upcoming_res = $stmt_upcoming->fetchAll(PDO::FETCH_ASSOC);
 
-// 4. Properties sorted by City
-$stmt_rooms = $db->query("
+// 4. Properties - Only those owned by this manager
+$stmt_rooms = $db->prepare("
     SELECT r.*, c.name as city_name, 
     (SELECT photo_url FROM room_photos rp WHERE rp.room_id = r.id ORDER BY is_primary DESC LIMIT 1) as main_photo
     FROM rooms r
     JOIN cities c ON r.city_id = c.id
+    WHERE r.user_id = ?
     ORDER BY c.name ASC, r.name ASC
 ");
+$stmt_rooms->execute([$current_manager_id]);
 $rooms = $stmt_rooms->fetchAll(PDO::FETCH_ASSOC);
 
-// 5. Latest Reviews
-$stmt_revs = $db->query("
+// 5. Latest Reviews - Only for rooms owned by this manager
+$stmt_revs = $db->prepare("
     SELECT rev.*, u.first_name, u.last_name, r.name as room_name
     FROM reviews rev
     JOIN users u ON rev.user_id = u.id
     JOIN rooms r ON rev.room_id = r.id
+    WHERE r.user_id = ?
     ORDER BY rev.created_at DESC LIMIT 5
 ");
+$stmt_revs->execute([$current_manager_id]);
 $reviews = $stmt_revs->fetchAll(PDO::FETCH_ASSOC);
 
-// 6. Master Booked Dates for Calendars
-$stmt_all_booked = $db->query("SELECT room_id, check_in, check_out FROM reservations WHERE status IN ('confirmed', 'pending')");
+// 6. Master Booked Dates - Only for rooms owned by this manager
+$stmt_all_booked = $db->prepare("SELECT res.room_id, res.check_in, res.check_out 
+                                 FROM reservations res 
+                                 JOIN rooms r ON res.room_id = r.id 
+                                 WHERE r.user_id = ? AND res.status IN ('confirmed', 'pending')");
+$stmt_all_booked->execute([$current_manager_id]);
 $all_booked_data = $stmt_all_booked->fetchAll(PDO::FETCH_ASSOC);
+
 $booked_by_room = [];
 foreach ($all_booked_data as $res) {
     $booked_by_room[$res['room_id']][] = ['from' => $res['check_in'], 'to' => $res['check_out']];
@@ -127,7 +143,7 @@ foreach ($all_booked_data as $res) {
             </div>
         </div>
         <div class="nav-icons">
-            <a href="home.php" title="Exit Dashboard"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+            <a href="home.php" title="Exit Dashboard"><i class="fa-solid fa-home"></i></a>
         </div>
     </nav>
 
@@ -158,7 +174,6 @@ foreach ($all_booked_data as $res) {
 
         <div class="layout-grid">
             <div class="main-manager-content">
-
                 <section class="manager-card-section">
                     <div class="section-header">
                         <h3><i class="fa-solid fa-bell"></i> Pending Approvals</h3>
@@ -182,7 +197,7 @@ foreach ($all_booked_data as $res) {
                                         </td>
                                         <td class="td-dates"><?php echo $res['check_in']; ?> → <?php echo $res['check_out']; ?></td>
                                         <td class="td-price"><?php echo number_format($res['total_price']); ?> RON</td>
-                                        <td class="td-actions" style = "display: flex; gap: 30px;">
+                                        <td class="td-actions" style="display: flex; gap: 30px;">
                                             <button class="action-btn approve" onclick="confirmStatus(<?php echo $res['id']; ?>, 'confirmed')" title="Approve"><i class="fa-solid fa-check"></i></button>
                                             <button class="action-btn reject" onclick="confirmStatus(<?php echo $res['id']; ?>, 'cancelled')" title="Reject"><i class="fa-solid fa-xmark"></i></button>
                                         </td>
@@ -311,26 +326,24 @@ foreach ($all_booked_data as $res) {
     </div>
 
     <div id="managerActionModal" class="res-overlay" style="display: none;">
-    <div class="res-overlay-content modal-compact">
-        <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-        <div id="modalIcon" class="modal-main-icon"></div>
-        <h2 id="modalTitle">Confirm Action</h2>
-        <p id="modalDescription" style="margin-bottom: 20px; color: #666;"></p>
-
-        <div id="inputSection" style="display: none;">
-            <div class="input-group">
-                <label id="inputLabel">Value</label>
-                <input type="number" id="modalValue" placeholder="0">
+        <div class="res-overlay-content modal-compact">
+            <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            <div id="modalIcon" class="modal-main-icon"></div>
+            <h2 id="modalTitle">Confirm Action</h2>
+            <p id="modalDescription" style="margin-bottom: 20px; color: #666;"></p>
+            <div id="inputSection" style="display: none;">
+                <div class="input-group">
+                    <label id="inputLabel">Value</label>
+                    <input type="number" id="modalValue" placeholder="0">
+                </div>
+                <div id="reasonGroup" class="input-group" style="display:none;">
+                    <label>Reason</label>
+                    <textarea id="modalReason"></textarea>
+                </div>
             </div>
-            <div id="reasonGroup" class="input-group" style="display:none;">
-                <label>Reason</label>
-                <textarea id="modalReason"></textarea>
-            </div>
+            <button id="modalSubmitBtn" class="btn">YES, PROCEED</button>
         </div>
-
-        <button id="modalSubmitBtn" class="btn">YES, PROCEED</button>
     </div>
-</div>
 
     <?php include '../utils/includes/footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>

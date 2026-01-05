@@ -49,14 +49,16 @@ $reviews = $stmt_reviews->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate average rating
 $total_rating = 0;
-foreach ($reviews as $rev) { $total_rating += $rev['rating']; }
+foreach ($reviews as $rev) {
+    $total_rating += $rev['rating'];
+}
 $avg_rating = count($reviews) > 0 ? round($total_rating / count($reviews), 1) : 0;
 
 // Address cleaning logic: removes country codes like "FRA" or "ITA"
-$raw_city = $room['city_name'] ?? ""; 
-$raw_address = $room['address'] ?? ""; 
+$raw_city = $room['city_name'] ?? "";
+$raw_address = $room['address'] ?? "";
 $city_parts = explode(',', $raw_city);
-$clean_city = trim($city_parts[0]); 
+$clean_city = trim($city_parts[0]);
 
 $real_address = $raw_address . ", " . $clean_city;
 $real_address = trim($real_address, ", ");
@@ -100,6 +102,7 @@ $facilities_map = [
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -111,6 +114,7 @@ $facilities_map = [
     <link rel="stylesheet" href="../styles/search_results.css">
     <link rel="stylesheet" href="../styles/room_details.css">
 </head>
+
 <body class="details-page-body">
 
     <nav class="results-nav">
@@ -126,6 +130,7 @@ $facilities_map = [
             </div>
         </div>
         <div class="nav-icons">
+            <a href="manager_dashboard.php" title="Manager Dashboard"><i class="fa-solid fa-crown"></i></a>
             <a href="home.php" title="Home"><i class="fa-solid fa-house"></i></a>
             <a href="../auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
@@ -212,7 +217,7 @@ $facilities_map = [
                                 <div class="review-card-mini">
                                     <div class="rev-header">
                                         <strong><?php echo htmlspecialchars($rev['first_name'] . ' ' . $rev['last_name']); ?></strong>
-                                        <span class="rev-stars"><?php for($i=0; $i < $rev['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?></span>
+                                        <span class="rev-stars"><?php for ($i = 0; $i < $rev['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?></span>
                                     </div>
                                     <p class="rev-comment"><?php echo htmlspecialchars($rev['comment']); ?></p>
                                     <small class="rev-date"><?php echo date('M d, Y', strtotime($rev['created_at'])); ?></small>
@@ -254,8 +259,10 @@ $facilities_map = [
             id: <?php echo $room_id; ?>,
             price: <?php echo $room['price']; ?>,
             bookedDates: [
-                <?php foreach ($booked_dates as $r): ?>
-                    { from: "<?php echo $r['check_in']; ?>", to: "<?php echo $r['check_out']; ?>" },
+                <?php foreach ($booked_dates as $r): ?> {
+                        from: "<?php echo $r['check_in']; ?>",
+                        to: "<?php echo $r['check_out']; ?>"
+                    },
                 <?php endforeach; ?>
             ]
         };
@@ -264,4 +271,5 @@ $facilities_map = [
     <script src="../js/room_details.js"></script>
     <?php include '../utils/includes/footer.php'; ?>
 </body>
+
 </html>

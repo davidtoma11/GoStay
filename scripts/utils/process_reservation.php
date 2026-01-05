@@ -2,7 +2,6 @@
 session_start();
 header('Content-Type: application/json');
 
-// Check if it's a POST request and user is logged in
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
     exit;
@@ -18,7 +17,7 @@ require_once __DIR__ . '/../config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$user_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id']; // The Client
 $room_id = isset($_POST['room_id']) ? intval($_POST['room_id']) : 0;
 $check_in = $_POST['check_in'] ?? '';
 $check_out = $_POST['check_out'] ?? '';
@@ -30,7 +29,9 @@ if (!$room_id || empty($check_in) || empty($check_out) || $total_price <= 0) {
 }
 
 try {
-    // 1. Double check availability (Optional but recommended)
+    $db->beginTransaction();
+
+    // 1. Check availability
     $stmt_check = $db->prepare("
         SELECT id FROM reservations 
         WHERE room_id = ? 
@@ -49,18 +50,31 @@ try {
               VALUES (:uid, :rid, :cin, :cout, :price, 'pending')";
     
     $stmt = $db->prepare($query);
-    $stmt->bindParam(':uid', $user_id);
-    $stmt->bindParam(':rid', $room_id);
-    $stmt->bindParam(':cin', $check_in);
-    $stmt->bindParam(':cout', $check_out);
-    $stmt->bindParam(':price', $total_price);
+    $stmt->execute([
+        ':uid'   => $user_id,
+        ':rid'   => $room_id,
+        ':cin'   => $check_in,
+        ':cout'  => $check_out,
+        ':price' => $total_price
+    ]);
 
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Reservation successful!']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to save reservation.']);
-    }
+    // 3. Automated Message: Client to Host
+    // Get host ID and room name
+    $stmt_host = $db->prepare("SELECT user_id, name FROM rooms WHERE id = ?");
+    $stmt_host->execute([$room_id]);
+    $roomData = $stmt_host->fetch(PDO::FETCH_ASSOC);
+    $host_id = $roomData['user_id'];
+    $room_name = $roomData['name'];
+
+    $welcome_msg = "Hello! I have just requested a reservation for '$room_name' from $check_in to $check_out. Looking forward to your approval!";
+    
+    $stmt_msg = $db->prepare("INSERT INTO messages (sender_id, receiver_id, message_body) VALUES (?, ?, ?)");
+    $stmt_msg->execute([$user_id, $host_id, $welcome_msg]);
+
+    $db->commit();
+    echo json_encode(['success' => true, 'message' => 'Reservation successful and host notified!']);
 
 } catch (Exception $e) {
+    if($db->inTransaction()) $db->rollBack();
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }

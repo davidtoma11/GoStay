@@ -168,7 +168,7 @@ if ($coords) {
         </div>
 
         <div class="nav-icons">
-            <a href="#" title="Loyalty"><i class="fa-solid fa-crown"></i></a>
+            <a href="manager_dashboard.php" title="Manager Dashboard"><i class="fa-solid fa-crown"></i></a>
             <a href="home.php" title="Home"><i class="fa-solid fa-house"></i></a>
             <a href="../auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
