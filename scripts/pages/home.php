@@ -39,7 +39,7 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <nav class="main-nav">
         <div class="nav-icons">
-            <a href="#" title="Loyalty"><i class="fa-solid fa-crown"></i></a>
+            <a href="manager_dashboard.php" title="Manager"><i class="fa-solid fa-crown"></i></a>
             <a href="<?php echo ($_SESSION['role'] === 'admin') ? '../admin/hub.php' : '../profile.php'; ?>" title="Profile">
                 <i class="fa-solid fa-user"></i>
             </a>
