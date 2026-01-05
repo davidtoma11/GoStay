@@ -112,28 +112,31 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <section class="destinations-grid">
             <?php foreach ($featured_cities as $city): ?>
+                
+                <a href="search_results.php?city_id=<?php echo $city['id']; ?>&guests=2" style="text-decoration: none; color: inherit; display: block;">
+                    
+                    <div class="city-card">
+                        <?php
+                        $db_image = $city['image_url'];
 
-                <div class="city-card">
-                    <?php
-                    $db_image = $city['image_url'];
+                        if (empty($db_image)) {
+                            $img = '../../assets/img/placeholder.jpg';
+                        } elseif (strpos($db_image, 'http') === 0) {
+                            $img = $db_image;
+                        } else {
+                            $filename = basename($db_image);
+                            $img = '../../assets/uploads/cities/' . $filename;
+                        }
+                        ?>
 
-                    if (empty($db_image)) {
-                        $img = '../../assets/img/placeholder.jpg';
-                    } elseif (strpos($db_image, 'http') === 0) {
-                        $img = $db_image;
-                    } else {
-                        $filename = basename($db_image);
-                        $img = '../../assets/uploads/cities/' . $filename;
-                    }
-                    ?>
+                        <div class="card-image" style="background-image: url('<?php echo $img; ?>');"></div>
 
-                    <div class="card-image" style="background-image: url('<?php echo $img; ?>');"></div>
-
-                    <div class="card-info">
-                        <span class="card-date">Available Now</span>
-                        <span class="card-name"><?php echo htmlspecialchars($city['name']); ?></span>
+                        <div class="card-info">
+                            <span class="card-date">Available Now</span>
+                            <span class="card-name"><?php echo htmlspecialchars($city['name']); ?></span>
+                        </div>
                     </div>
-                </div>
+                </a>
 
             <?php endforeach; ?>
         </section>
