@@ -7,16 +7,16 @@ html, body {
 
 @font-face {
     font-family: 'croatah';
-    src: url('../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
+    src: url('../../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Roboto';
-    src: url('../assets/fonts/Roboto-VariableFont_wdth\,wght.ttf') format('truetype');
+    src: url('../../assets/fonts/Roboto-VariableFont_wdth\,wght.ttf') format('truetype');
 }
 
 body {
-    background: url('../assets/img/lp_bg.png') center/cover fixed;
+    background: url('../../assets/img/lp_bg.png') center/cover fixed;
     min-height: 100vh;
 }
 
@@ -27,7 +27,7 @@ body {
     width: 2vw;
     min-width: 32px;
     aspect-ratio: 1;
-    background: url('../assets/img/logo.png') center/contain no-repeat;
+    background: url('../../assets/img/logo.png') center/contain no-repeat;
     z-index: 1000;
     transition: transform 0.3s ease, filter 0.3s ease;
 }
@@ -47,7 +47,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Hero text simplificat fără animații */
 .hero {
     color: #fff;
     max-width: 58%;
@@ -67,7 +66,6 @@ body {
 .hero:hover .hero-brand {
     text-shadow: 0 4px 15px rgba(123, 43, 212, 0.3);
 }
-
 
 .hero-title {
     font-size: 4.2rem;
@@ -123,7 +121,6 @@ body {
     background: linear-gradient(90deg, #7b2bd4, #5a2398);
     border-radius: 2px;
 }
-
 
 .auth-form .field {
     margin-bottom: 20px;
@@ -317,7 +314,6 @@ body {
     border: 1px solid #2ecc71;
 }
 
-/* Responsive Design */
 @media (max-width: 900px) {
     .page-container {
         padding: 4vh 4vw;
@@ -409,7 +405,6 @@ body {
     }
 }
 
-
 .captcha-wrapper {
     display: flex;
     justify-content: center;
@@ -418,7 +413,6 @@ body {
     width: 100%;
     min-height: 78px;        
 }
-
 
 @media (max-width: 400px) {
     .g-recaptcha {

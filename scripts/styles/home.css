@@ -7,11 +7,11 @@ html, body {
 
 @font-face {
     font-family: 'croatah';
-    src: url('../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
+    src: url('../../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
 }
 
 body {
-    background-image: url('../assets/img/main_db_bg.png');
+    background-image: url('../../assets/img/main_db_bg.png');
     background-position: top center;  
     background-size: cover;           
     background-repeat: no-repeat;
@@ -72,6 +72,7 @@ body {
     background: rgba(255, 50, 50, 0.2) !important;
     border-color: rgba(255, 50, 50, 0.4) !important;
 }
+
 .logout-btn:hover {
     background: rgba(255, 50, 50, 0.4) !important;
 }
@@ -155,6 +156,7 @@ body {
     outline: none;
     text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+
 .search-part-left select option { color: #333; }
 
 .search-part-right {
@@ -292,7 +294,7 @@ body {
 
 .city-card-link {
     text-decoration: none; 
-    display: block;        
+    display: block;         
 }
 
 .city-card:hover {
@@ -334,15 +336,12 @@ body {
     background: rgba(40, 10, 60, 0.6);
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    
     padding: 15px 25px;
     border-radius: 50px;
-    
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 30px;
-    
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
@@ -410,105 +409,11 @@ body {
     font-size: 1rem;
 }
 
-.main-footer {
-    width: 100%;
-    background: linear-gradient(to top, #2e0845, rgba(75, 20, 100, 0.8));
-    backdrop-filter: blur(10px);
-    padding: 60px 0 40px;
-    margin-top: auto;
-    border-top: 1px solid rgba(255,255,255,0.05);
-}
-
-.footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 50px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 40px;
-}
-
-.footer-brand {
-    display: flex;
-    flex-direction: column;
-    max-width: 300px;
-}
-
-.footer-logo {
-    font-family: 'croatah';
-    font-size: 2.2rem;
-    color: #fff;
-    margin-bottom: 15px;
-}
-
-.footer-desc {
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.6;
-    margin-bottom: 20px;
-}
-
-.copyright {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.5);
-}
-
-.footer-column {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.footer-column h4 {
-    color: #fff;
-    margin: 0 0 10px;
-    font-size: 1.1rem;
-}
-
-.footer-column a {
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.3s;
-}
-
-.footer-column a:hover {
-    color: #fff;
-    text-shadow: 0 0 8px rgba(123, 43, 212, 0.6);
-}
-
-.footer-social {
-    display: flex;
-    flex-direction: column;
-    text-decoration: none;
-    gap: 15px;
-}
-
-.footer-social a {
-    color: #fff;
-    font-size: 1.4rem;
-    transition: transform 0.3s ease;
-    background: rgba(255,255,255,0.1);
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-}
-
-.footer-social a:hover {
-    transform: translateY(-3px);
-    background: #7b2bd4;
-}
-
 .floating-logo {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-image: url('../assets/img/logo.png');
+    background-image: url('../../assets/img/logo.png');
     background-size: cover; 
     background-position: center;
     background-repeat: no-repeat;
@@ -558,9 +463,8 @@ body {
     .teaser-card { flex-direction: column; text-align: center; }
 }
 
-
 .wide-card {
-    max-width: 800px; /* Wider for better layout */
+    max-width: 800px;
 }
 
 .support-form {
@@ -588,7 +492,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Glassmorphism Inputs */
 .form-group input, 
 .form-group textarea,
 .glass-select {
@@ -619,13 +522,8 @@ body {
 }
 
 .glass-select option {
-    background: #2e004f; /* Dark background for dropdown items */
+    background: #2e004f; 
     color: white;
-}
-
-/* Custom Radio Buttons */
-.radio-label {
-    margin-bottom: 12px !important;
 }
 
 .radio-group {

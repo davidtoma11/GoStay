@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../models/Room.php'; // New Requirement
 require_once __DIR__ . '/../utils/weather_logic.php';
 
 $database = new Database();
@@ -14,6 +15,9 @@ $conn = $database->getConnection();
 if (!$conn) {
     die("Connection error");
 }
+
+// Instantiate the Room model
+$roomModel = new Room($conn);
 
 // Facilities mapping
 $facilities_map = [
@@ -47,7 +51,7 @@ $facilities_map = [
     'is_smoking_allowed' => ['label' => 'Smoking Allowed', 'icon' => 'fa-smoking']
 ];
 
-// Fetch Cities
+// Fetch Cities for dropdown
 $cities_query = "SELECT id, name FROM cities ORDER BY name ASC";
 $stmt_cities = $conn->prepare($cities_query);
 $stmt_cities->execute();
@@ -60,63 +64,8 @@ $check_out = isset($_GET['check_out']) ? $_GET['check_out'] : '';
 $guests = isset($_GET['guests']) ? intval($_GET['guests']) : 2;
 $selected_facilities = isset($_GET['facilities']) ? $_GET['facilities'] : [];
 
-// SQL Query with LEFT JOIN for facilities
-$sql = "SELECT 
-            r.*, 
-            c.name as city_name,
-            (SELECT photo_url 
-             FROM room_photos 
-             WHERE room_id = r.id 
-             ORDER BY is_primary DESC, id ASC 
-             LIMIT 1) as main_photo,
-            (SELECT AVG(rating) FROM reviews WHERE room_id = r.id) as avg_rating,
-            (SELECT COUNT(id) FROM reviews WHERE room_id = r.id) as review_count
-        FROM rooms r
-        JOIN cities c ON r.city_id = c.id
-        LEFT JOIN facilities f ON r.id = f.room_id
-        WHERE 1=1";
-
-$params = [];
-
-if (!empty($city_id)) {
-    $sql .= " AND r.city_id = ?";
-    $params[] = $city_id;
-}
-
-if ($guests > 0) {
-    $sql .= " AND r.capacity >= ?";
-    $params[] = $guests;
-}
-
-if (!empty($check_in) && !empty($check_out)) {
-    $sql .= " AND r.id NOT IN (
-                SELECT room_id 
-                FROM reservations 
-                WHERE status IN ('confirmed', 'pending')
-                AND (
-                    (check_in < ? AND check_out > ?) 
-                )
-              )";
-    $params[] = $check_out;
-    $params[] = $check_in;
-}
-
-// Facility Filtering
-if (!empty($selected_facilities)) {
-    foreach ($selected_facilities as $fac) {
-        if (array_key_exists($fac, $facilities_map)) {
-            $sql .= " AND f.$fac = 1";
-        }
-    }
-}
-
-try {
-    $stmt = $conn->prepare($sql);
-    $stmt->execute($params);
-    $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    die($e->getMessage());
-}
+// Use Room Model to fetch results (SQL Logic moved to Room.php)
+$rooms = $roomModel->search($city_id, $guests, $check_in, $check_out, $selected_facilities);
 
 // Weather Logic
 $weather_city_name = "Bucharest";
@@ -141,16 +90,16 @@ if ($coords) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoStay - Search Results</title>
-    <link rel="stylesheet" href="../../styles/footer.css">
+    <link rel="stylesheet" href="../styles/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../styles/search_results.css">
+    <link rel="stylesheet" href="../styles/search_results.css">
 </head>
 <body>
 
     <nav class="results-nav">
         <div class="nav-left">
-            <a class="nav-logo"></a>
+            <a href="home.php" class="nav-logo"></a>
 
             <div class="search-bar-outer compact-search">
                 <form action="search_results.php" method="GET" class="search-form-layout" id="searchForm">
@@ -256,10 +205,13 @@ if ($coords) {
                                     </div>
                                     <h3 class="card-title"><?php echo htmlspecialchars($room['name']); ?></h3>
                                     <p class="card-location"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($room['city_name']); ?></p>
+                                    
                                     <div class="card-meta">
                                         <span><i class="fa-solid fa-user-group"></i> <?php echo $room['capacity']; ?> guests</span>
-                                        <span><i class="fa-solid fa-bed"></i> <?php echo $room['bedrooms']; ?> BR</span>
+                                        <span><i class="fa-solid fa-bed"></i> <?php echo $room['bedrooms'] . ' ' . ($room['bedrooms'] == 1 ? 'bedroom' : 'bedrooms'); ?></span>
+                                        <span><i class="fa-solid fa-bath"></i> <?php echo $room['bathrooms'] . ' ' . ($room['bathrooms'] == 1 ? 'bath' : 'baths'); ?></span>
                                     </div>
+
                                     <div class="card-footer-row">
                                         <div class="price-box">
                                             <span class="price-val"><?php echo number_format($room['price']); ?> RON</span>
@@ -321,7 +273,6 @@ if ($coords) {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Date Label Logic
             function setupDateLabel(inputId, labelId, defaultText) {
                 const input = document.getElementById(inputId);
                 const label = document.getElementById(labelId);
@@ -339,7 +290,6 @@ if ($coords) {
             setupDateLabel('checkin-input', 'checkin-label', 'Check-in');
             setupDateLabel('checkout-input', 'checkout-label', 'Check-out');
 
-            // Dropdown & Reset Logic
             const toggleBtn = document.getElementById('toggleFilters');
             const dropdown = document.getElementById('filtersDropdown');
             const resetBtn = document.getElementById('resetFilters');

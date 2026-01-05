@@ -1,11 +1,11 @@
 @font-face {
     font-family: 'croatah';
-    src: url('../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
+    src: url('../../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Roboto';
-    src: url('../assets/fonts/Roboto-VariableFont_wdth\,wght.ttf') format('truetype');
+    src: url('../../assets/fonts/Roboto-VariableFont_wdth\,wght.ttf') format('truetype');
 }
 
 :root {
@@ -47,7 +47,6 @@ body {
     flex-direction: column;
 }
 
-/* Header Styles */
 .crud-header {
     display: flex;
     justify-content: space-between;
@@ -105,7 +104,6 @@ body {
     box-shadow: 0 2px 12px var(--shadow);
 }
 
-/* Grid & Cards */
 .crud-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -194,7 +192,6 @@ body {
     box-shadow: 0 4px 12px rgba(123, 43, 212, 0.25);
 }
 
-/* Button Styles */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -271,7 +268,6 @@ body {
     font-weight: 700;
 }
 
-/* Operations Page */
 .operations-container {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -346,7 +342,6 @@ body {
     padding: 2.5rem;
 }
 
-/* Form Styles */
 .crud-form {
     background: var(--surface);
     padding: 2rem;
@@ -450,7 +445,6 @@ body {
     align-items: center;
 }
 
-/* Table Styles */
 .table-container {
     background: var(--surface);
     border-radius: 12px;
@@ -622,7 +616,6 @@ body {
     opacity: 0.5;
 }
 
-/* Animations */
 .crud-card, .operations-container {
     animation: fadeInUp 0.5s ease-out;
 }
@@ -670,7 +663,6 @@ body {
     background: var(--primary);
 }
 
-/* Responsive */
 @media (max-width: 1200px) {
     .crud-grid {
         grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -703,11 +695,6 @@ body {
     .action-buttons { flex-direction: column; }
 }
 
-
-/* ==========================================================================
-   STILURI SPECIFICE PENTRU LOGIN / SIGNUP (INTEGRATE)
-   ========================================================================== */
-
 .page-container {
     display: flex;
     min-height: 100vh;
@@ -716,7 +703,6 @@ body {
     overflow: hidden;
 }
 
-/* Partea stângă - Hero */
 .hero {
     flex: 1;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
@@ -755,7 +741,6 @@ body {
     opacity: 0.8;
 }
 
-/* Partea dreaptă - Formular */
 .login-panel {
     flex: 1;
     display: flex;
@@ -788,7 +773,6 @@ body {
     gap: 1.25rem;
 }
 
-/* Input-uri cu iconițe pentru Login */
 .input-with-icon {
     position: relative;
     width: 100%;
@@ -796,7 +780,7 @@ body {
 
 .input-with-icon input {
     width: 100%;
-    padding: 1rem 1rem 1rem 3rem; /* Spațiu pentru iconiță stânga */
+    padding: 1rem 1rem 1rem 3rem;
     border: 2px solid var(--border);
     border-radius: 12px;
     font-size: 1rem;
@@ -874,19 +858,17 @@ body {
     font-size: 1.1rem;
 }
 
-
 .logo {
     position: absolute;
     top: 2rem;
     right: 2rem;
     width: 40px;
     height: 40px;
-    background-image: url('../assets/img/logo.png'); 
+    background-image: url('../../assets/img/logo.png'); 
     background-size: contain;
     background-repeat: no-repeat;
 }
 
-/* Responsive Login */
 @media (max-width: 900px) {
     .page-container {
         flex-direction: column;

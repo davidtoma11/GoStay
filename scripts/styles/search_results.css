@@ -7,7 +7,7 @@ html, body {
 
 @font-face {
     font-family: 'croatah';
-    src: url('../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
+    src: url('../../assets/fonts/CrotahFreeVersionItalic-z8Ev3.ttf') format('truetype');
 }
 
 body {
@@ -37,7 +37,7 @@ body {
 }
 
 .nav-logo {
-    background-image: url('../assets/img/logo.png');
+    background-image: url('../../assets/img/logo.png');
     background-size: contain;
     background-repeat: no-repeat;
     aspect-ratio: 1/1;
@@ -228,8 +228,7 @@ body {
 
 .filter-option {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: center; gap: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     color: #555;

@@ -11,7 +11,7 @@ if (empty($_SESSION['csrf_token'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoStay - Authentication</title>
-    <link rel="stylesheet" href="../../styles/login.css">
+    <link rel="stylesheet" href="../styles/login.css">
     
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
@@ -187,6 +187,6 @@ if (empty($_SESSION['csrf_token'])) {
 
     <div class="logo"></div>
 
-    <script src="../../styles/login.js"></script>
+    <script src="../js/login.js"></script>
 </body>
 </html>

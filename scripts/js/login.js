@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const csrfTokenInput = document.getElementById('csrf_token_input');
             const csrfTokenValue = csrfTokenInput ? csrfTokenInput.value : '';
 
-            // PATH FIX: ../auth/login.php
+            
             fetch('../auth/login.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -136,7 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 password: p1
             };
 
-            // PATH FIX: ../auth/signup.php
             fetch('../auth/signup.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -208,7 +207,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this.querySelector('.btn');
             btn.disabled = true; btn.textContent = "Sending...";
 
-            // PATH FIX: ../auth/send_reset.php
             fetch('../auth/send_reset.php', { 
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail })
@@ -238,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this.querySelector('.btn');
             btn.disabled = true; 
 
-            // PATH FIX: ../auth/verify_code.php
             fetch('../auth/verify_code.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail, code: resetCode })
@@ -260,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const p2 = document.getElementById('confirmPassInput').value;
             if(p1!==p2) return showMessage("Passwords do not match", "error");
 
-            // PATH FIX: ../auth/reset_confirm.php
             fetch('../auth/reset_confirm.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail, code: resetCode, password: p1 })
@@ -278,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = e.target;
             btn.textContent = "Sending..."; btn.style.pointerEvents = "none";
             
-            // PATH FIX: ../auth/send_reset.php
             fetch('../auth/send_reset.php', { 
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail })

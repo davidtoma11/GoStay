@@ -17,7 +17,7 @@ $db = $database->getConnection();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoStay CRUD Panel</title>
-    <link rel="stylesheet" href="../../styles/crud.css">
+    <link rel="stylesheet" href="../styles/crud.css">
 </head>
 
 <body>
