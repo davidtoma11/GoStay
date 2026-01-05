@@ -11,7 +11,7 @@ if (empty($_SESSION['csrf_token'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoStay - Authentication</title>
-    <link rel="stylesheet" href="../styles/login.css">
+    <link rel="stylesheet" href="../../styles/login.css">
     
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
@@ -34,14 +34,14 @@ if (empty($_SESSION['csrf_token'])) {
                 
                 <div class="form-body">
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
+                        <img class="left-icon" src="../../assets/img/email-icon.png" alt="email">
                         <input type="text" id="loginEmail" name="email" placeholder="Email" required>
                     </div>
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="pass">
                         <input id="loginPassword" type="password" name="password" placeholder="Password" required>
                         <button type="button" class="toggle-visibility" data-target="loginPassword">
-                            <img class="eye-icon" src="../assets/img/toggle-password.png" alt="show">
+                            <img class="eye-icon" src="../../assets/img/toggle-password.png" alt="show">
                         </button>
                     </div>
                     <div class="links">
@@ -59,28 +59,28 @@ if (empty($_SESSION['csrf_token'])) {
                 <h3 class="login-heading">CREATE ACCOUNT</h3>
                 <div class="form-body">
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/surname-icon.png" alt="first">
+                        <img class="left-icon" src="../../assets/img/surname-icon.png" alt="first">
                         <input type="text" id="regFirstName" name="first_name" placeholder="First Name" required>
                     </div>
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/name-icon.png" alt="last">
+                        <img class="left-icon" src="../../assets/img/name-icon.png" alt="last">
                         <input type="text" id="regLastName" name="last_name" placeholder="Last Name" required>
                     </div>
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
+                        <img class="left-icon" src="../../assets/img/email-icon.png" alt="email">
                         <input type="email" id="regEmail" name="email" placeholder="Email Address" required>
                     </div>
                     
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="pass">
                         <input id="signupPassword" type="password" name="password" placeholder="Password" required>
                         <button type="button" class="toggle-visibility" data-target="signupPassword">
-                            <img class="eye-icon" src="../assets/img/toggle-password.png" alt="show">
+                            <img class="eye-icon" src="../../assets/img/toggle-password.png" alt="show">
                         </button>
                     </div>
 
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="pass">
                         <input id="signupConfirmPassword" type="password" name="confirm_password" placeholder="Confirm Password" required>
                     </div>
 
@@ -107,7 +107,7 @@ if (empty($_SESSION['csrf_token'])) {
 
                 <div class="form-body">
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="code">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="code">
                         <input type="text" id="signupCodeInput" name="code" placeholder="Activation Code" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold;">
                     </div>
                 </div>
@@ -122,7 +122,7 @@ if (empty($_SESSION['csrf_token'])) {
                 <p style="text-align:center; color:#666; margin-bottom:1rem;">Step 1/3: Enter email to receive code.</p>
                 <div class="form-body">
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/email-icon.png" alt="email">
+                        <img class="left-icon" src="../../assets/img/email-icon.png" alt="email">
                         <input type="email" id="forgotEmail" name="email" placeholder="Your Email Address" required>
                     </div>
                     <div class="links">
@@ -145,7 +145,7 @@ if (empty($_SESSION['csrf_token'])) {
 
                 <div class="form-body">
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="code">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="code">
                         <input type="text" id="verifyCodeInput" name="code" placeholder="Enter 6-Digit Code" required maxlength="6" style="letter-spacing: 5px; text-align: center; font-weight: bold;">
                     </div>
                     
@@ -164,15 +164,15 @@ if (empty($_SESSION['csrf_token'])) {
                 <p style="text-align:center; color:#666; margin-bottom:1rem;">Step 3/3: Create a new password.</p>
                 <div class="form-body">
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="pass">
                         <input id="newPassInput" type="password" name="password" placeholder="New Password" required>
                         <button type="button" class="toggle-visibility" data-target="newPassInput">
-                            <img class="eye-icon" src="../assets/img/toggle-password.png" alt="show">
+                            <img class="eye-icon" src="../../assets/img/toggle-password.png" alt="show">
                         </button>
                     </div>
 
                     <div class="field input-with-icon">
-                        <img class="left-icon" src="../assets/img/password-icon.png" alt="pass">
+                        <img class="left-icon" src="../../assets/img/password-icon.png" alt="pass">
                         <input id="confirmPassInput" type="password" name="confirm_password" placeholder="Confirm Password" required>
                     </div>
                 </div>
@@ -187,6 +187,6 @@ if (empty($_SESSION['csrf_token'])) {
 
     <div class="logo"></div>
 
-    <script src="../styles/login.js"></script>
+    <script src="../../styles/login.js"></script>
 </body>
 </html>

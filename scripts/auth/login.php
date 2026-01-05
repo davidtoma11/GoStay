@@ -44,7 +44,7 @@ if(!empty($data->email) && !empty($data->password)) {
             $_SESSION['role'] = $user->role; 
             $_SESSION['user_name'] = $user->first_name . ' ' . $user->last_name;
             
-            $redirect = "home.php"; 
+            $redirect = "home.php"; // Default redirect
 
             echo json_encode([
                 "success" => true, 

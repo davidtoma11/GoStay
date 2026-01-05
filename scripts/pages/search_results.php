@@ -5,8 +5,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/utils/weather_logic.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../utils/weather_logic.php';
 
 $database = new Database();
 $conn = $database->getConnection();
@@ -106,15 +106,15 @@ if ($coords) {
     <title>GoStay - Search Results</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles/search_results.css">
-    <link rel="stylesheet" href="../styles/footer.css">
+    <link rel="stylesheet" href="../../styles/search_results.css">
+    <link rel="stylesheet" href="../../styles/footer.css">
 </head>
 
 <body>
 
     <nav class="results-nav">
         <div class="nav-left">
-            <a href="../index.php" class="nav-logo"></a>
+            <a class="nav-logo"></a>
 
             <div class="search-bar-outer compact-search">
                 <form action="search_results.php" method="GET" class="search-form-layout">
@@ -166,7 +166,7 @@ if ($coords) {
         <div class="nav-icons">
             <a href="#" title="Loyalty"><i class="fa-solid fa-crown"></i></a>
             <a href="home.php" title="Home"><i class="fa-solid fa-house"></i></a>
-            <a href="auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            <a href="../auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     </nav>
 
@@ -186,17 +186,17 @@ if ($coords) {
                         <?php foreach ($rooms as $room): ?>
                             <?php
                             // Image Path Logic
-                            $image_to_show = '../assets/img/placeholder.jpg';
+                            $image_to_show = '../../assets/img/placeholder.jpg';
                             $photo_db = $room['main_photo'];
                             if (!empty($photo_db)) {
                                 if (strpos($photo_db, 'http') === 0) {
                                     $image_to_show = $photo_db;
                                 } elseif (strpos($photo_db, 'uploads/') === 0) {
-                                    $image_to_show = '../assets/' . $photo_db;
+                                    $image_to_show = '../../assets/' . $photo_db;
                                 } elseif (strpos($photo_db, 'assets/') === 0) {
-                                    $image_to_show = '../' . $photo_db;
+                                    $image_to_show = '../../' . $photo_db;
                                 } else {
-                                    $image_to_show = '../assets/uploads/rooms/' . $photo_db;
+                                    $image_to_show = '../../assets/uploads/rooms/' . $photo_db;
                                 }
                             }
 
@@ -253,7 +253,7 @@ if ($coords) {
             <aside class="sidebar-column">
 
                 <?php
-                require_once 'utils/weather_logic.php';
+                require_once '../utils/weather_logic.php';
 
                 $weather_city_name = "Bucharest"; 
                 if (!empty($city_id)) {
@@ -278,7 +278,7 @@ if ($coords) {
                             <h4><?php echo htmlspecialchars($weather_city_name); ?></h4>
                             <span><?php echo date('F Y'); ?> Forecast</span>
                         </div>
-                        <img src="../assets/img/logo.png" style="height:30px; opacity:0.8;">
+                        <img src="../../assets/img/logo.png" style="height:30px; opacity:0.8;">
                     </div>
 
                     <div class="accu-calendar">
@@ -362,7 +362,7 @@ if ($coords) {
         });
     </script>
 
-    <?php include 'utils/includes/footer.php'; ?>
+    <?php include '../utils/includes/footer.php'; ?>
 
 </body>
 

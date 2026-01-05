@@ -80,7 +80,6 @@ if ($data->action === 'signup') {
         $mail->isHTML(true);
         $mail->Subject = 'Welcome to GoStay - Verify Account';
 
-        // --- PREMIUM TEMPLATE (Welcome Version) ---
         $primaryColor = '#A62FDD'; // Purple
         $bgColor = '#f4f7f6';
 

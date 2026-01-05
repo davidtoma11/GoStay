@@ -2,11 +2,11 @@
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit;
 }
 
-require_once 'config/database.php';
+require_once '../config/database.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -31,8 +31,8 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>GoStay - Home</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles/home.css">
-    <link rel="stylesheet" href="../styles/footer.css">
+    <link rel="stylesheet" href="../../styles/home.css">
+    <link rel="stylesheet" href="../../styles/footer.css">
 </head>
 
 <body>
@@ -40,13 +40,13 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <nav class="main-nav">
         <div class="nav-icons">
             <a href="#" title="Loyalty"><i class="fa-solid fa-crown"></i></a>
-            <a href="<?php echo ($_SESSION['role'] === 'admin') ? 'admin/hub.php' : 'profile.php'; ?>" title="Profile">
+            <a href="<?php echo ($_SESSION['role'] === 'admin') ? '../admin/hub.php' : '../profile.php'; ?>" title="Profile">
                 <i class="fa-solid fa-user"></i>
             </a>
             <a href="#" title="Trending"><i class="fa-solid fa-fire"></i></a>
             <a href="#" title="My Bookings"><i class="fa-solid fa-calendar-days"></i></a>
             <a href="#" title="Messages"><i class="fa-solid fa-comment"></i></a>
-            <a href="auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            <a href="../auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     </nav>
 
@@ -118,12 +118,12 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $db_image = $city['image_url'];
 
                     if (empty($db_image)) {
-                        $img = 'assets/img/placeholder.jpg';
+                        $img = '../../assets/img/placeholder.jpg';
                     } elseif (strpos($db_image, 'http') === 0) {
                         $img = $db_image;
                     } else {
                         $filename = basename($db_image);
-                        $img = '../assets/uploads/cities/' . $filename;
+                        $img = '../../assets/uploads/cities/' . $filename;
                     }
                     ?>
 
@@ -144,7 +144,7 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <h3>Need help with your booking?</h3>
                     <p>Our concierge team is here for you.</p>
                 </div>
-                <a href="support/contact.php" class="btn teaser-btn">Contact Support</a>
+                <a href="../support/contact.php" class="btn teaser-btn">Contact Support</a>
             </div>
         </section>
 
@@ -185,7 +185,7 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
         });
     </script>
 
-    <?php include 'utils/includes/footer.php'; ?>
+    <?php include '../utils/includes/footer.php'; ?>
 
 </body>
 

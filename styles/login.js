@@ -91,16 +91,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const original = btn.textContent;
             btn.textContent = 'Processing...'; btn.disabled = true;
 
-            // MODIFICARE: Preluam token-ul din input-ul ascuns
             const csrfTokenInput = document.getElementById('csrf_token_input');
             const csrfTokenValue = csrfTokenInput ? csrfTokenInput.value : '';
 
-            fetch('auth/login.php', {
+            // PATH FIX: ../auth/login.php
+            fetch('../auth/login.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     email: document.getElementById('loginEmail').value, 
                     password: document.getElementById('loginPassword').value,
-                    csrf_token: csrfTokenValue // MODIFICARE: Trimitem token-ul
+                    csrf_token: csrfTokenValue 
                 })
             })
             .then(r => r.json())
@@ -136,7 +136,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 password: p1
             };
 
-            fetch('auth/signup.php', {
+            // PATH FIX: ../auth/signup.php
+            fetch('../auth/signup.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             })
@@ -174,7 +175,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this.querySelector('.btn');
             btn.disabled = true; btn.textContent = "Activating...";
 
-            fetch('auth/signup.php', {
+            // PATH FIX: ../auth/signup.php
+            fetch('../auth/signup.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     action: 'verify', 
@@ -206,7 +208,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this.querySelector('.btn');
             btn.disabled = true; btn.textContent = "Sending...";
 
-            fetch('auth/send_reset.php', { 
+            // PATH FIX: ../auth/send_reset.php
+            fetch('../auth/send_reset.php', { 
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail })
             })
@@ -235,7 +238,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this.querySelector('.btn');
             btn.disabled = true; 
 
-            fetch('auth/verify_code.php', {
+            // PATH FIX: ../auth/verify_code.php
+            fetch('../auth/verify_code.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail, code: resetCode })
             })
@@ -256,7 +260,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const p2 = document.getElementById('confirmPassInput').value;
             if(p1!==p2) return showMessage("Passwords do not match", "error");
 
-            fetch('auth/reset_confirm.php', {
+            // PATH FIX: ../auth/reset_confirm.php
+            fetch('../auth/reset_confirm.php', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail, code: resetCode, password: p1 })
             }).then(r=>r.json()).then(d=>{
@@ -273,7 +278,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = e.target;
             btn.textContent = "Sending..."; btn.style.pointerEvents = "none";
             
-            fetch('auth/send_reset.php', { 
+            // PATH FIX: ../auth/send_reset.php
+            fetch('../auth/send_reset.php', { 
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: resetEmail })
             }).then(r=>r.json()).then(d=>{

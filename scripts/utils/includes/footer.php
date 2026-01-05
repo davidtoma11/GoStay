@@ -16,7 +16,7 @@
 
             <div class="footer-column">
                 <h4>Support</h4>
-                <a href="#">Help Center</a>
+                <a href="../support/contact.php">Help Center</a>
                 <a href="#">Safety</a>
                 <a href="#">Cancellation</a>
                 <a href="#">Concierge</a>

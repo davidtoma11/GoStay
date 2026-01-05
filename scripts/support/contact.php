@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 // Database Connection
-require_once '../../scripts/config/database.php';
+require_once '..//config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
@@ -64,7 +64,7 @@ $phone_db = '';
                         <i class="fa-solid fa-circle-check success-icon"></i>
                         <h2 class="success-title">Message Sent!</h2>
                         <p class="success-text">Your request has been submitted.<br>Check your email for confirmation.</p>
-                        <a href="../home.php" class="btn contact-btn-custom" style="display: inline-block; width: auto; padding: 0 40px;">Return Home</a>
+                        <a href="../pages/home.php" class="btn contact-btn-custom" style="display: inline-block; width: auto; padding: 0 40px;">Return Home</a>
                     </div>
 
                 <?php elseif (isset($_GET['status']) && $_GET['status'] == 'error'): ?>
