@@ -15,7 +15,39 @@ if (!$conn) {
     die("Connection error");
 }
 
-// Fetch Cities for Dropdown
+// Facilities mapping
+$facilities_map = [
+    'has_wifi' => ['label' => 'Wi-Fi', 'icon' => 'fa-wifi'],
+    'has_workspace' => ['label' => 'Workspace', 'icon' => 'fa-laptop'],
+    'has_ac' => ['label' => 'Air Conditioning', 'icon' => 'fa-snowflake'],
+    'has_heating' => ['label' => 'Heating', 'icon' => 'fa-temperature-arrow-up'],
+    'has_parking' => ['label' => 'Free Parking', 'icon' => 'fa-square-parking'],
+    'has_self_checkin' => ['label' => 'Self Check-in', 'icon' => 'fa-key'],
+    'has_elevator' => ['label' => 'Elevator', 'icon' => 'fa-elevator'],
+    'has_kitchen' => ['label' => 'Kitchen', 'icon' => 'fa-kitchen-set'],
+    'has_fridge' => ['label' => 'Refrigerator', 'icon' => 'fa-box'],
+    'has_microwave' => ['label' => 'Microwave', 'icon' => 'fa-fire'],
+    'has_cooking_basics' => ['label' => 'Cooking Basics', 'icon' => 'fa-utensils'],
+    'has_dishes' => ['label' => 'Dishes', 'icon' => 'fa-plate-wheat'],
+    'has_stove' => ['label' => 'Stove', 'icon' => 'fa-fire-burner'],
+    'has_coffee_maker' => ['label' => 'Coffee Maker', 'icon' => 'fa-mug-hot'],
+    'has_washing_machine' => ['label' => 'Washing Machine', 'icon' => 'fa-soap'],
+    'has_dryer' => ['label' => 'Dryer', 'icon' => 'fa-shirt'],
+    'has_iron' => ['label' => 'Iron', 'icon' => 'fa-shirt'],
+    'has_hairdryer' => ['label' => 'Hair Dryer', 'icon' => 'fa-wind'],
+    'has_hot_water' => ['label' => 'Hot Water', 'icon' => 'fa-faucet-drip'],
+    'has_essentials' => ['label' => 'Essentials', 'icon' => 'fa-pump-soap'],
+    'has_tv' => ['label' => 'TV', 'icon' => 'fa-tv'],
+    'has_balcony' => ['label' => 'Balcony', 'icon' => 'fa-cloud-sun'],
+    'has_pool' => ['label' => 'Pool', 'icon' => 'fa-person-swimming'],
+    'has_jacuzzi' => ['label' => 'Jacuzzi', 'icon' => 'fa-hot-tub-person'],
+    'has_smoke_alarm' => ['label' => 'Smoke Alarm', 'icon' => 'fa-bell'],
+    'has_first_aid' => ['label' => 'First Aid', 'icon' => 'fa-suitcase-medical'],
+    'is_pet_friendly' => ['label' => 'Pet Friendly', 'icon' => 'fa-paw'],
+    'is_smoking_allowed' => ['label' => 'Smoking Allowed', 'icon' => 'fa-smoking']
+];
+
+// Fetch Cities
 $cities_query = "SELECT id, name FROM cities ORDER BY name ASC";
 $stmt_cities = $conn->prepare($cities_query);
 $stmt_cities->execute();
@@ -26,9 +58,9 @@ $city_id = isset($_GET['city_id']) ? intval($_GET['city_id']) : '';
 $check_in = isset($_GET['check_in']) ? $_GET['check_in'] : '';
 $check_out = isset($_GET['check_out']) ? $_GET['check_out'] : '';
 $guests = isset($_GET['guests']) ? intval($_GET['guests']) : 2;
+$selected_facilities = isset($_GET['facilities']) ? $_GET['facilities'] : [];
 
-// Build Query
-// We select room details, the primary photo, average rating, and review count.
+// SQL Query with LEFT JOIN for facilities
 $sql = "SELECT 
             r.*, 
             c.name as city_name,
@@ -41,23 +73,21 @@ $sql = "SELECT
             (SELECT COUNT(id) FROM reviews WHERE room_id = r.id) as review_count
         FROM rooms r
         JOIN cities c ON r.city_id = c.id
+        LEFT JOIN facilities f ON r.id = f.room_id
         WHERE 1=1";
 
 $params = [];
 
-// Filter by City
 if (!empty($city_id)) {
     $sql .= " AND r.city_id = ?";
     $params[] = $city_id;
 }
 
-// Filter by Capacity
 if ($guests > 0) {
     $sql .= " AND r.capacity >= ?";
     $params[] = $guests;
 }
 
-// Filter by Availability (Exclude rooms with overlapping reservations)
 if (!empty($check_in) && !empty($check_out)) {
     $sql .= " AND r.id NOT IN (
                 SELECT room_id 
@@ -71,6 +101,15 @@ if (!empty($check_in) && !empty($check_out)) {
     $params[] = $check_in;
 }
 
+// Facility Filtering
+if (!empty($selected_facilities)) {
+    foreach ($selected_facilities as $fac) {
+        if (array_key_exists($fac, $facilities_map)) {
+            $sql .= " AND f.$fac = 1";
+        }
+    }
+}
+
 try {
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
@@ -79,8 +118,8 @@ try {
     die($e->getMessage());
 }
 
-// 4. Weather Data Logic
-$weather_city_name = "Bucharest"; // Default
+// Weather Logic
+$weather_city_name = "Bucharest";
 if (!empty($city_id)) {
     foreach ($dropdown_cities as $dc) {
         if ($dc['id'] == $city_id) {
@@ -89,7 +128,6 @@ if (!empty($city_id)) {
         }
     }
 }
-
 $coords = getCityCoordinates($weather_city_name);
 $forecast = null;
 if ($coords) {
@@ -99,17 +137,15 @@ if ($coords) {
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GoStay - Search Results</title>
+    <link rel="stylesheet" href="../../styles/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../styles/search_results.css">
-    <link rel="stylesheet" href="../../styles/footer.css">
 </head>
-
 <body>
 
     <nav class="results-nav">
@@ -117,8 +153,7 @@ if ($coords) {
             <a class="nav-logo"></a>
 
             <div class="search-bar-outer compact-search">
-                <form action="search_results.php" method="GET" class="search-form-layout">
-
+                <form action="search_results.php" method="GET" class="search-form-layout" id="searchForm">
                     <div class="search-part-left">
                         <i class="fa-solid fa-location-dot"></i>
                         <select name="city_id">
@@ -132,32 +167,52 @@ if ($coords) {
                     </div>
 
                     <div class="search-part-right">
-                        <div class="input-item date-wrapper" id="checkin-wrapper">
+                        <div class="input-item date-wrapper">
                             <div class="text-col">
                                 <span class="label" id="checkin-label"><?php echo $check_in ? $check_in : 'Check-in'; ?></span>
                                 <input type="date" name="check_in" id="checkin-input" value="<?php echo $check_in; ?>" class="date-input-overlay">
                             </div>
                         </div>
-
                         <div class="divider"></div>
-
-                        <div class="input-item date-wrapper" id="checkout-wrapper">
+                        <div class="input-item date-wrapper">
                             <div class="text-col">
                                 <span class="label" id="checkout-label"><?php echo $check_out ? $check_out : 'Check-out'; ?></span>
                                 <input type="date" name="check_out" id="checkout-input" value="<?php echo $check_out; ?>" class="date-input-overlay">
                             </div>
                         </div>
-
                         <div class="divider"></div>
-
                         <div class="input-item guests-wrapper">
                             <i class="fa-solid fa-user-group"></i>
                             <input type="number" name="guests" min="1" value="<?php echo $guests; ?>" class="guests-input">
                         </div>
 
-                        <button type="submit" class="btn search-btn-custom">
+                        <button type="submit" class="btn search-btn-custom" title="Search">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
+
+                        <div class="filter-btn-wrapper">
+                            <button type="button" class="btn search-btn-custom" id="toggleFilters" style="margin-left: 10px;" title="Filter Amenities">
+                                <i class="fa-solid fa-sliders"></i>
+                            </button>
+
+                            <div class="filters-dropdown" id="filtersDropdown">
+                                <h4>Amenities</h4>
+                                <div class="filters-grid">
+                                    <?php foreach ($facilities_map as $col_name => $details): ?>
+                                        <label class="filter-option">
+                                            <input type="checkbox" name="facilities[]" value="<?php echo $col_name; ?>"
+                                                <?php echo in_array($col_name, $selected_facilities) ? 'checked' : ''; ?>>
+                                            <i class="fa-solid <?php echo $details['icon']; ?>" style="width:20px; text-align:center;"></i>
+                                            <?php echo $details['label']; ?>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="filter-actions">
+                                    <button type="button" id="resetFilters" style="background:none; border:none; color:#888; cursor:pointer; font-size:0.9rem; text-decoration:underline;">Reset</button>
+                                    <button type="submit" class="btn-apply">Apply Filters</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -172,71 +227,45 @@ if ($coords) {
 
     <div class="content-wrapper results-wrapper">
         <div class="layout-grid">
-
             <main class="results-column">
                 <div class="results-header-text">
                     <h2>Stays found: <?php echo count($rooms); ?></h2>
-                    <?php if (!empty($check_in) && !empty($check_out)): ?>
-                        <p style="font-size: 0.9rem; opacity: 0.8;">Available from <?php echo htmlspecialchars($check_in); ?> to <?php echo htmlspecialchars($check_out); ?></p>
-                    <?php endif; ?>
                 </div>
 
                 <?php if (count($rooms) > 0): ?>
                     <div class="cards-grid-2col">
                         <?php foreach ($rooms as $room): ?>
                             <?php
-                            // Image Path Logic
                             $image_to_show = '../../assets/img/placeholder.jpg';
-                            $photo_db = $room['main_photo'];
-                            if (!empty($photo_db)) {
-                                if (strpos($photo_db, 'http') === 0) {
-                                    $image_to_show = $photo_db;
-                                } elseif (strpos($photo_db, 'uploads/') === 0) {
-                                    $image_to_show = '../../assets/' . $photo_db;
-                                } elseif (strpos($photo_db, 'assets/') === 0) {
-                                    $image_to_show = '../../' . $photo_db;
-                                } else {
-                                    $image_to_show = '../../assets/uploads/rooms/' . $photo_db;
-                                }
+                            if (!empty($room['main_photo'])) {
+                                $photo = $room['main_photo'];
+                                if (strpos($photo, 'http') === 0) $image_to_show = $photo;
+                                elseif (strpos($photo, 'uploads/') === 0) $image_to_show = '../../assets/' . $photo;
+                                else $image_to_show = '../../assets/uploads/rooms/' . $photo;
                             }
-
-                            // Rating Logic
-                            $avg_rating = $room['avg_rating'];
-                            $review_count = $room['review_count'];
-                            $rating_display = ($review_count > 0) ? number_format($avg_rating, 2) : 'New';
-                            $count_display = ($review_count > 0) ? "($review_count reviews)" : '';
+                            $rating_display = ($room['review_count'] > 0) ? number_format($room['avg_rating'], 2) : 'New';
                             ?>
-
                             <div class="modern-card">
                                 <div class="card-image-header" style="background-image: url('<?php echo htmlspecialchars($image_to_show); ?>');">
-                                    <div class="top-badges">
-                                        <button class="fav-icon"><i class="fa-regular fa-heart"></i></button>
-                                    </div>
+                                    <div class="top-badges"><button class="fav-icon"><i class="fa-regular fa-heart"></i></button></div>
                                 </div>
-
                                 <div class="card-body">
                                     <div class="rating-pill">
                                         <i class="fa-solid fa-star"></i> <?php echo $rating_display; ?>
-                                        <span class="reviews"><?php echo $count_display; ?></span>
+                                        <span class="reviews"><?php echo ($room['review_count'] > 0) ? "({$room['review_count']} reviews)" : ''; ?></span>
                                     </div>
-
                                     <h3 class="card-title"><?php echo htmlspecialchars($room['name']); ?></h3>
-                                    <p class="card-location">
-                                        <i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($room['city_name']); ?>
-                                    </p>
-
+                                    <p class="card-location"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($room['city_name']); ?></p>
                                     <div class="card-meta">
                                         <span><i class="fa-solid fa-user-group"></i> <?php echo $room['capacity']; ?> guests</span>
-                                        <span><i class="fa-solid fa-bed"></i> <?php echo $room['bedrooms']; ?> bedrooms</span>
-                                        <span><i class="fa-solid fa-bath"></i> <?php echo $room['bathrooms']; ?> baths</span>
+                                        <span><i class="fa-solid fa-bed"></i> <?php echo $room['bedrooms']; ?> BR</span>
                                     </div>
-
                                     <div class="card-footer-row">
                                         <div class="price-box">
                                             <span class="price-val"><?php echo number_format($room['price']); ?> RON</span>
                                             <span class="price-unit">/ night</span>
                                         </div>
-                                        <a href="room_details.php?id=<?php echo $room['id']; ?>&check_in=<?php echo $check_in; ?>&check_out=<?php echo $check_out; ?>" class="btn card-btn-custom">Book Now</a>
+                                        <a href="room_details.php?id=<?php echo $room['id']; ?>" class="btn card-btn-custom">Book Now</a>
                                     </div>
                                 </div>
                             </div>
@@ -244,34 +273,13 @@ if ($coords) {
                     </div>
                 <?php else: ?>
                     <div class="glass-card no-results">
-                        <h3>No accommodations available for these dates.</h3>
-                        <p>Try changing your check-in/check-out dates or location.</p>
+                        <h3>No matches found.</h3>
+                        <a href="search_results.php?city_id=<?php echo $city_id; ?>" style="color: #7b2bd4; font-weight: bold;">Clear All Filters</a>
                     </div>
                 <?php endif; ?>
             </main>
 
             <aside class="sidebar-column">
-
-                <?php
-                require_once '../utils/weather_logic.php';
-
-                $weather_city_name = "Bucharest"; 
-                if (!empty($city_id)) {
-                    foreach ($dropdown_cities as $dc) {
-                        if ($dc['id'] == $city_id) {
-                            $weather_city_name = $dc['name'];
-                            break;
-                        }
-                    }
-                }
-
-                $coords = getCityCoordinates($weather_city_name);
-                $forecast = null;
-                if ($coords) {
-                    $forecast = getWeatherData($coords['lat'], $coords['lon']);
-                }
-                ?>
-
                 <div class="accu-weather-widget">
                     <div class="accu-header">
                         <div>
@@ -280,72 +288,43 @@ if ($coords) {
                         </div>
                         <img src="../../assets/img/logo.png" style="height:30px; opacity:0.8;">
                     </div>
-
                     <div class="accu-calendar">
                         <div class="weekdays-row">
                             <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
                         </div>
-
                         <div class="days-grid">
                             <?php
                             if ($forecast && isset($forecast['daily']['time'])):
                                 $total_days = count($forecast['daily']['time']);
-
-                                // Calculate starting index based on the first day of the month
-                                $first_day_timestamp = strtotime($forecast['daily']['time'][0]);
-                                $start_day_index = date('w', $first_day_timestamp); // 0 (Sun) - 6 (Sat)
-
-                                // Empty cells before the first day
-                                for ($k = 0; $k < $start_day_index; $k++) {
-                                    echo '<div class="day-cell empty"></div>';
-                                }
-
-                               
+                                $start_day_index = date('w', strtotime($forecast['daily']['time'][0]));
+                                for ($k = 0; $k < $start_day_index; $k++) echo '<div class="day-cell empty"></div>';
                                 for ($i = 0; $i < $total_days; $i++):
-                                    if (!isset($forecast['daily']['time'][$i])) continue;
-
-                                    $date = $forecast['daily']['time'][$i];
-                                    $max = round($forecast['daily']['temperature_2m_max'][$i]);
-                                    $min = round($forecast['daily']['temperature_2m_min'][$i]);
-                                    $code = $forecast['daily']['weathercode'][$i];
-
-                                    $day_num = date('j', strtotime($date));
-                                    $style = getWeatherIcon($code);
-
-                                    // Highlight current day
-                                    $is_today = ($date == date('Y-m-d')) ? 'today-active' : '';
+                                    $style = getWeatherIcon($forecast['daily']['weathercode'][$i]);
+                                    $is_today = ($forecast['daily']['time'][$i] == date('Y-m-d')) ? 'today-active' : '';
                             ?>
                                     <div class="day-cell <?php echo $is_today; ?>">
-                                        <span class="cell-date"><?php echo $day_num; ?></span>
+                                        <span class="cell-date"><?php echo date('j', strtotime($forecast['daily']['time'][$i])); ?></span>
                                         <i class="fa-solid <?php echo $style['icon']; ?>" style="color: <?php echo $style['color']; ?>;"></i>
                                         <div class="cell-temps">
-                                            <span class="high"><?php echo $max; ?>°</span>
-                                            <span class="low"><?php echo $min; ?>°</span>
+                                            <span class="high"><?php echo round($forecast['daily']['temperature_2m_max'][$i]); ?>°</span>
+                                            <span class="low"><?php echo round($forecast['daily']['temperature_2m_min'][$i]); ?>°</span>
                                         </div>
                                     </div>
                                 <?php endfor;
-                            else: ?>
-                                <p style="grid-column: 1/-1; padding: 20px; text-align: center;">Weather data unavailable.</p>
-                            <?php endif; ?>
+                            endif; ?>
                         </div>
                     </div>
-
-                    <div class="accu-footer">
-                        <small>Powered by Open-Meteo Parsed Data</small>
-                    </div>
                 </div>
-
             </aside>
         </div>
     </div>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Date Label Logic
             function setupDateLabel(inputId, labelId, defaultText) {
                 const input = document.getElementById(inputId);
                 const label = document.getElementById(labelId);
-
                 input.addEventListener('change', function() {
                     if (this.value) {
                         label.textContent = this.value;
@@ -359,11 +338,32 @@ if ($coords) {
             }
             setupDateLabel('checkin-input', 'checkin-label', 'Check-in');
             setupDateLabel('checkout-input', 'checkout-label', 'Check-out');
+
+            // Dropdown & Reset Logic
+            const toggleBtn = document.getElementById('toggleFilters');
+            const dropdown = document.getElementById('filtersDropdown');
+            const resetBtn = document.getElementById('resetFilters');
+
+            toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+                toggleBtn.classList.toggle('active');
+            });
+
+            resetBtn.addEventListener('click', () => {
+                dropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!dropdown.contains(e.target) && e.target !== toggleBtn) {
+                    dropdown.style.display = 'none';
+                    toggleBtn.classList.remove('active');
+                }
+            });
+            dropdown.addEventListener('click', (e) => e.stopPropagation());
         });
     </script>
 
     <?php include '../utils/includes/footer.php'; ?>
-
 </body>
-
 </html>
