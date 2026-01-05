@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// Security check: Redirect if not authenticated
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
@@ -13,6 +14,7 @@ $database = new Database();
 $conn = $database->getConnection();
 $roomModel = new Room($conn);
 
+// Get and sanitize room ID
 $room_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $room = $roomModel->getDetails($room_id);
 
@@ -21,16 +23,20 @@ if (!$room) {
     exit;
 }
 
+// Fetch all photos for the slider
 $stmt_photos = $conn->prepare("SELECT photo_url FROM room_photos WHERE room_id = ? ORDER BY is_primary DESC");
 $stmt_photos->execute([$room_id]);
 $photos = $stmt_photos->fetchAll(PDO::FETCH_ASSOC);
 
+// Get available amenities data
 $facilities_data = $roomModel->getFacilities($room_id);
 
+// Get booked ranges for calendar disabling
 $stmt_booked = $conn->prepare("SELECT check_in, check_out FROM reservations WHERE room_id = ? AND status IN ('confirmed', 'pending')");
 $stmt_booked->execute([$room_id]);
 $booked_dates = $stmt_booked->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch reviews with user details
 $stmt_reviews = $conn->prepare("
     SELECT r.*, u.first_name, u.last_name 
     FROM reviews r 
@@ -41,11 +47,21 @@ $stmt_reviews = $conn->prepare("
 $stmt_reviews->execute([$room_id]);
 $reviews = $stmt_reviews->fetchAll(PDO::FETCH_ASSOC);
 
+// Calculate average rating
 $total_rating = 0;
 foreach ($reviews as $rev) { $total_rating += $rev['rating']; }
 $avg_rating = count($reviews) > 0 ? round($total_rating / count($reviews), 1) : 0;
 
-$real_address = ($room['address'] ?? "12 Sample Street") . ", " . $room['city_name'] . ", Romania";
+// Address cleaning logic: removes country codes like "FRA" or "ITA"
+$raw_city = $room['city_name'] ?? ""; 
+$raw_address = $room['address'] ?? ""; 
+$city_parts = explode(',', $raw_city);
+$clean_city = trim($city_parts[0]); 
+
+$real_address = $raw_address . ", " . $clean_city;
+$real_address = trim($real_address, ", ");
+
+// Google Maps Embed URL
 $map_url = "https://maps.google.com/maps?q=" . urlencode($real_address) . "&t=&z=15&ie=UTF8&iwloc=&output=embed";
 
 // Facilities mapping
@@ -79,6 +95,7 @@ $facilities_map = [
     'is_pet_friendly' => ['label' => 'Pet Friendly', 'icon' => 'fa-paw'],
     'is_smoking_allowed' => ['label' => 'Smoking Allowed', 'icon' => 'fa-smoking']
 ];
+
 ?>
 
 <!DOCTYPE html>
@@ -213,6 +230,22 @@ $facilities_map = [
                     <iframe width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" src="<?php echo $map_url; ?>"></iframe>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="reservationOverlay" class="res-overlay" style="display: none;">
+        <div class="res-overlay-content">
+            <div class="success-checkmark">
+                <div class="check-icon">
+                    <span class="icon-line line-tip"></span>
+                    <span class="icon-line line-long"></span>
+                    <div class="icon-circle"></div>
+                    <div class="icon-fix"></div>
+                </div>
+            </div>
+            <h2 class="res-confirm-title">Reservation Confirmed!</h2>
+            <p class="res-confirm-text">You will be contacted by the host shortly.</p>
+            <div class="res-timer-bar"></div>
         </div>
     </div>
 
