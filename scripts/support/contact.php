@@ -31,7 +31,7 @@ $phone_db = '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../styles/home.css"> <style>
+    <link rel="stylesheet" href="../styles/home.css"> <style>
         .success-view { text-align: center; padding: 40px 20px; animation: fadeIn 0.5s ease; }
         .success-icon { font-size: 5rem; color: #4CAF50; margin-bottom: 20px; }
         .success-title { font-size: 2rem; margin-bottom: 10px; color: #fff; }

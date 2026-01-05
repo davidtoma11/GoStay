@@ -1,115 +1,302 @@
 <?php
 session_start();
+
+// Security check: Redirect if not authenticated
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/Room.php';
 
 $database = new Database();
-$db = $database->getConnection();
-$roomModel = new Room($db);
+$conn = $database->getConnection();
+$roomModel = new Room($conn);
 
-// Get Room ID and Context
+// Get and sanitize room ID
 $room_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$check_in = isset($_GET['check_in']) ? $_GET['check_in'] : '';
-$check_out = isset($_GET['check_out']) ? $_GET['check_out'] : '';
-
-// Fetch Data via Model
 $room = $roomModel->getDetails($room_id);
-if (!$room) { header("Location: home.php"); exit; }
 
-$photos = $roomModel->getPhotos($room_id);
-$facilities = $roomModel->getFacilities($room_id);
+if (!$room) {
+    header("Location: home.php");
+    exit;
+}
 
-// Facility UI Map
-$fac_map = [
+// Fetch all photos for the slider
+$stmt_photos = $conn->prepare("SELECT photo_url FROM room_photos WHERE room_id = ? ORDER BY is_primary DESC");
+$stmt_photos->execute([$room_id]);
+$photos = $stmt_photos->fetchAll(PDO::FETCH_ASSOC);
+
+// Get available amenities data
+$facilities_data = $roomModel->getFacilities($room_id);
+
+// Get booked ranges for calendar disabling
+$stmt_booked = $conn->prepare("SELECT check_in, check_out FROM reservations WHERE room_id = ? AND status IN ('confirmed', 'pending')");
+$stmt_booked->execute([$room_id]);
+$booked_dates = $stmt_booked->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch reviews using first_name and last_name from users table
+$stmt_reviews = $conn->prepare("
+    SELECT r.*, u.first_name, u.last_name 
+    FROM reviews r 
+    JOIN users u ON r.user_id = u.id 
+    WHERE r.room_id = ? 
+    ORDER BY r.created_at DESC
+");
+$stmt_reviews->execute([$room_id]);
+$reviews = $stmt_reviews->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate average rating
+$total_rating = 0;
+foreach ($reviews as $rev) { $total_rating += $rev['rating']; }
+$avg_rating = count($reviews) > 0 ? round($total_rating / count($reviews), 1) : 0;
+
+// Prepare address and map URL
+$real_address = ($room['address'] ?? "12 Sample Street") . ", " . $room['city_name'] . ", Romania";
+$map_url = "https://maps.google.com/maps?q=" . urlencode($real_address) . "&t=&z=15&ie=UTF8&iwloc=&output=embed";
+
+// Facilities mapping
+$facilities_map = [
     'has_wifi' => ['label' => 'Wi-Fi', 'icon' => 'fa-wifi'],
+    'has_workspace' => ['label' => 'Workspace', 'icon' => 'fa-laptop'],
     'has_ac' => ['label' => 'Air Conditioning', 'icon' => 'fa-snowflake'],
-    'has_kitchen' => ['label' => 'Full Kitchen', 'icon' => 'fa-kitchen-set'],
-    'has_tv' => ['label' => 'Smart TV', 'icon' => 'fa-tv'],
-    'has_pool' => ['label' => 'Private Pool', 'icon' => 'fa-person-swimming'],
-    'is_pet_friendly' => ['label' => 'Pets Welcome', 'icon' => 'fa-paw'],
+    'has_heating' => ['label' => 'Heating', 'icon' => 'fa-temperature-arrow-up'],
     'has_parking' => ['label' => 'Free Parking', 'icon' => 'fa-square-parking'],
-    'has_workspace' => ['label' => 'Dedicated Workspace', 'icon' => 'fa-laptop']
+    'has_self_checkin' => ['label' => 'Self Check-in', 'icon' => 'fa-key'],
+    'has_elevator' => ['label' => 'Elevator', 'icon' => 'fa-elevator'],
+    'has_kitchen' => ['label' => 'Kitchen', 'icon' => 'fa-kitchen-set'],
+    'has_fridge' => ['label' => 'Refrigerator', 'icon' => 'fa-box'],
+    'has_microwave' => ['label' => 'Microwave', 'icon' => 'fa-fire'],
+    'has_cooking_basics' => ['label' => 'Cooking Basics', 'icon' => 'fa-utensils'],
+    'has_dishes' => ['label' => 'Dishes', 'icon' => 'fa-plate-wheat'],
+    'has_stove' => ['label' => 'Stove', 'icon' => 'fa-fire-burner'],
+    'has_coffee_maker' => ['label' => 'Coffee Maker', 'icon' => 'fa-mug-hot'],
+    'has_washing_machine' => ['label' => 'Washing Machine', 'icon' => 'fa-soap'],
+    'has_dryer' => ['label' => 'Dryer', 'icon' => 'fa-shirt'],
+    'has_iron' => ['label' => 'Iron', 'icon' => 'fa-shirt'],
+    'has_hairdryer' => ['label' => 'Hair Dryer', 'icon' => 'fa-wind'],
+    'has_hot_water' => ['label' => 'Hot Water', 'icon' => 'fa-faucet-drip'],
+    'has_essentials' => ['label' => 'Essentials', 'icon' => 'fa-pump-soap'],
+    'has_tv' => ['label' => 'TV', 'icon' => 'fa-tv'],
+    'has_balcony' => ['label' => 'Balcony', 'icon' => 'fa-cloud-sun'],
+    'has_pool' => ['label' => 'Pool', 'icon' => 'fa-person-swimming'],
+    'has_jacuzzi' => ['label' => 'Jacuzzi', 'icon' => 'fa-hot-tub-person'],
+    'has_smoke_alarm' => ['label' => 'Smoke Alarm', 'icon' => 'fa-bell'],
+    'has_first_aid' => ['label' => 'First Aid', 'icon' => 'fa-suitcase-medical'],
+    'is_pet_friendly' => ['label' => 'Pet Friendly', 'icon' => 'fa-paw'],
+    'is_smoking_allowed' => ['label' => 'Smoking Allowed', 'icon' => 'fa-smoking']
 ];
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($room['name']); ?> - GoStay</title>
+    <title><?php echo htmlspecialchars($room['name']); ?> - GoStay Premium</title>
+
+    <link rel="stylesheet" href="../styles/footer.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../styles/room_details.css"> 
-    <link rel="stylesheet" href="../styles/footer.css"> 
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <link rel="stylesheet" href="../styles/search_results.css">
+    <link rel="stylesheet" href="../styles/room_details.css">
 </head>
-<body>
-    <nav class="details-nav">
-        <a href="javascript:history.back()" class="back-link"><i class="fa-solid fa-chevron-left"></i> Back</a>
-        <div class="logo">GoStay</div>
+
+<body class="details-page-body">
+
+    <nav class="results-nav">
+        <div class="nav-left">
+            <a href="search_results.php?city_id=<?php echo $room['city_id']; ?>" class="nav-logo"></a>
+            <div class="nav-header-info">
+                <h2 class="room-nav-title"><?php echo htmlspecialchars($room['name']); ?></h2>
+                <div class="nav-sub-info">
+                    <span class="nav-rating"><i class="fa-solid fa-star"></i> <?php echo $avg_rating; ?> (<?php echo count($reviews); ?> reviews)</span>
+                    <span class="nav-divider">|</span>
+                    <span class="nav-fast-booking"><i class="fa-solid fa-bolt"></i> Fast Booking</span>
+                </div>
+            </div>
+        </div>
+        <div class="nav-icons">
+            <a href="home.php" title="Home"><i class="fa-solid fa-house"></i></a>
+            <a href="../auth/logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+        </div>
     </nav>
 
-    <main class="room-container">
-        <section class="room-gallery">
-            <?php if (!empty($photos)): ?>
-                <div class="main-photo" style="background-image: url('../../assets/uploads/rooms/<?php echo $photos[0]['photo_url']; ?>');"></div>
-                <div class="side-photos">
-                    <?php for($i=1; $i<min(3, count($photos)); $i++): ?>
-                        <div class="small-photo" style="background-image: url('../../assets/uploads/rooms/<?php echo $photos[$i]['photo_url']; ?>');"></div>
-                    <?php endfor; ?>
-                </div>
-            <?php endif; ?>
-        </section>
-
-        <div class="room-content">
-            <div class="room-main-info">
-                <h1><?php echo htmlspecialchars($room['name']); ?></h1>
-                <p class="location-tag"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($room['city_name']); ?></p>
-                
-                <div class="capacity-pills">
-                    <span><i class="fa-solid fa-user"></i> <?php echo $room['capacity']; ?> guests</span>
-                    <span><i class="fa-solid fa-bed"></i> <?php echo $room['bedrooms']; ?> Bedrooms</span>
-                    <span><i class="fa-solid fa-bath"></i> <?php echo $room['bathrooms']; ?> Baths</span>
-                </div>
-
-                <hr>
-
-                <section class="amenities-section">
-                    <h3>What this place offers</h3>
-                    <div class="amenities-grid">
-                        <?php foreach($fac_map as $key => $meta): ?>
-                            <?php if(!empty($facilities[$key])): ?>
-                                <div class="amenity-card">
-                                    <i class="fa-solid <?php echo $meta['icon']; ?>"></i>
-                                    <span><?php echo $meta['label']; ?></span>
-                                </div>
-                            <?php endif; ?>
+    <div class="content-wrapper results-wrapper">
+        <div class="top-split-layout">
+            <div class="main-image-display">
+                <?php if (!empty($photos)): ?>
+                    <div class="slider-wrapper" id="sliderWrapper">
+                        <?php foreach ($photos as $index => $photo): ?>
+                            <div class="slide <?php echo $index === 0 ? 'active' : ''; ?>"
+                                style="background-image: url('../../assets/<?php echo htmlspecialchars($photo['photo_url']); ?>');">
+                            </div>
                         <?php endforeach; ?>
                     </div>
-                </section>
+                    <div class="slider-controls">
+                        <button onclick="moveSlide(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button onclick="moveSlide(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <aside class="booking-sidebar">
-                <div class="price-header">
-                    <span class="price"><?php echo number_format($room['price']); ?> RON</span> <small>/ night</small>
-                </div>
-                <form action="process_booking.php" method="POST" class="booking-form">
-                    <input type="hidden" name="room_id" value="<?php echo $room_id; ?>">
-                    <div class="date-inputs">
-                        <div class="input-group">
-                            <label>CHECK-IN</label>
-                            <input type="date" name="check_in" value="<?php echo $check_in; ?>" required>
+            <aside class="booking-column">
+                <div class="booking-card-premium">
+                    <div class="price-header-row">
+                        <div class="price-main">
+                            <span class="vibrant-price" id="basePrice" data-unit-price="<?php echo $room['price']; ?>">
+                                <?php echo number_format($room['price']); ?> RON
+                            </span>
+                            <span class="unit">/ night</span>
                         </div>
-                        <div class="input-group">
-                            <label>CHECK-OUT</label>
-                            <input type="date" name="check_out" value="<?php echo $check_out; ?>" required>
+                        <div class="discount-tag">10% Off</div>
+                    </div>
+
+                    <div class="calendar-inline-container">
+                        <label class="calendar-label">Select Stay Dates</label>
+                        <div id="inlineCalendar"></div>
+                    </div>
+
+                    <div id="bookingSummary" class="booking-summary-box" style="display:none;">
+                        <div class="calc-row">
+                            <span id="nightsCalc">0 nights</span>
+                            <span id="subtotalVal">0 RON</span>
+                        </div>
+                        <div class="calc-row">
+                            <span>Service fee (5%)</span> 
+                            <span id="serviceFeeVal">0 RON</span>
+                        </div>
+                        <div class="calc-row discount">
+                            <span>Discount (10%)</span>
+                            <span id="discountVal">-0 RON</span>
+                        </div>
+                        <div class="divider-summary"></div>
+                        <div class="calc-row total">
+                            <span>Total Cost:</span>
+                            <span id="totalVal">0 RON</span>
                         </div>
                     </div>
-                    <button type="submit" class="btn-reserve">Confirm Reservation</button>
-                </form>
+
+                    <button class="btn" id="reserveBtn" disabled>Check Availability</button>
+                    <p class="safe-note">No payment needed now</p>
+                </div>
             </aside>
         </div>
-    </main>
 
+        <div class="details-bottom-grid">
+            <div class="info-content">
+                <h1 class="room-hero-title"><?php echo htmlspecialchars($room['name']); ?></h1>
+                <p class="address-text"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($real_address); ?></p>
+
+                <div class="amenities-comprehensive">
+                    <h3>What this place offers</h3>
+                    <div class="features-icon-grid">
+                        <?php foreach ($facilities_map as $key => $f): ?>
+                            <?php $is_available = isset($facilities_data[$key]) && $facilities_data[$key] == 1; ?>
+                            <div class="feature-item <?php echo $is_available ? 'available' : 'unavailable'; ?>">
+                                <i class="fa-solid <?php echo $f['icon']; ?>"></i>
+                                <span><?php echo $f['label']; ?></span>
+                                <?php if (!$is_available): ?>
+                                    <i class="fa-solid fa-xmark status-icon"></i>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
+                <div class="room-description">
+                    <h3>Description</h3>
+                    <p><?php echo nl2br(htmlspecialchars($room['description'] ?? "No description available.")); ?></p>
+                </div>
+
+                <div class="reviews-section">
+                    <h3>Guest Reviews (<?php echo count($reviews); ?>)</h3>
+                    <div class="reviews-grid-details">
+                        <?php if (!empty($reviews)): ?>
+                            <?php foreach ($reviews as $rev): ?>
+                                <div class="review-card-mini">
+                                    <div class="rev-header">
+                                        <strong><?php echo htmlspecialchars($rev['first_name'] . ' ' . $rev['last_name']); ?></strong>
+                                        <span class="rev-stars">
+                                            <?php for($i=0; $i < $rev['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
+                                        </span>
+                                    </div>
+                                    <p class="rev-comment"><?php echo htmlspecialchars($rev['comment']); ?></p>
+                                    <small class="rev-date"><?php echo date('M d, Y', strtotime($rev['created_at'])); ?></small>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="no-reviews-msg">No reviews yet for this stay.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-column">
+                <div class="map-container-premium">
+                    <iframe width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" src="<?php echo $map_url; ?>"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        let slideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+
+        function moveSlide(n) {
+            if (slides.length === 0) return;
+            slides[slideIndex].classList.remove('active');
+            slideIndex = (slideIndex + n + slides.length) % slides.length;
+            slides[slideIndex].classList.add('active');
+        }
+
+        const bookedRanges = [
+            <?php foreach ($booked_dates as $r): ?> {
+                    from: "<?php echo $r['check_in']; ?>",
+                    to: "<?php echo $r['check_out']; ?>"
+                },
+            <?php endforeach; ?>
+        ];
+
+        flatpickr("#inlineCalendar", {
+            inline: true,
+            mode: "range",
+            minDate: "today",
+            dateFormat: "Y-m-d",
+            disable: bookedRanges,
+            onChange: function(selectedDates) {
+                const btn = document.getElementById('reserveBtn');
+                const summary = document.getElementById('bookingSummary');
+                if (selectedDates.length === 2) {
+                    const diff = Math.ceil(Math.abs(selectedDates[1] - selectedDates[0]) / (86400000));
+                    const price = <?php echo $room['price']; ?>;
+                    const subtotal = diff * price;
+                    const serviceFee = subtotal * 0.05;
+                    const discount = subtotal * 0.10;
+                    const finalTotal = subtotal + serviceFee - discount;
+
+                    document.getElementById('nightsCalc').innerText = diff + " nights";
+                    document.getElementById('subtotalVal').innerText = subtotal.toLocaleString() + " RON";
+                    document.getElementById('serviceFeeVal').innerText = serviceFee.toLocaleString() + " RON";
+                    document.getElementById('discountVal').innerText = "-" + discount.toLocaleString() + " RON";
+                    document.getElementById('totalVal').innerText = finalTotal.toLocaleString() + " RON";
+
+                    summary.style.display = 'block';
+                    btn.disabled = false;
+                    btn.innerText = "RESERVE NOW";
+                } else {
+                    summary.style.display = 'none';
+                    btn.disabled = true;
+                }
+            }
+        });
+    </script>
     <?php include '../utils/includes/footer.php'; ?>
 </body>
 </html>
