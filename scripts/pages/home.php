@@ -108,9 +108,9 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <section class="destinations-grid">
             <?php foreach ($featured_cities as $city): ?>
-                
+
                 <a href="search_results.php?city_id=<?php echo $city['id']; ?>&guests=2" style="text-decoration: none; color: inherit; display: block;">
-                    
+
                     <div class="city-card">
                         <?php
                         $db_image = $city['image_url'];
@@ -150,7 +150,14 @@ $featured_cities = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
 
-    <div class="floating-logo"></div>
+    <div class="floating-logo"
+        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+        onclick="window.location.href='../crud/hub.php';"
+        style="cursor: pointer;"
+        <?php else: ?>
+        style="cursor: default;"
+        <?php endif; ?>>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
