@@ -1,9 +1,11 @@
-<p align="center"> <img src="assets/img/logo.png" alt="GoStay Logo" width="200"> </p>
+<p align="center">
+<img src="assets/img/logo.png" alt="GoStay Logo" width="350">
+</p>
 
 <p align="center"> <img src="https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP"> <img src="https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL"> <img src="https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E" alt="JavaScript"> <img src="https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"> <img src="https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"> </p>
 
 
-# GoStay – Web Booking Platform
+# 🏨 GoStay – Web Booking Platform
 
 **GoStay** is a marketplace platform designed to connect travelers with exclusive property listings worldwide. The project emphasizes a seamless user experience, modular architecture, and high-security standards.
 
@@ -11,19 +13,19 @@
 
 ## 🔑 Key Features
 
-### Authentication & Security
+### 🛡️ Authentication & Security
 
 * **Dual Auth System**: Secure login and registration powered by AJAX (Fetch API).
 * **Code Verification**: Two-step registration process featuring activation code simulation.
 * **Security Layer**: Integrated protection against session hijacking and rigorous backend data validation.
 
-### Analytics & Management
+### 📊 Analytics & Management
 
 * **Real-time Tracker**: Custom middleware that monitors IP addresses and page traffic to identify visitor patterns.
 * **Financial Hub**: Dedicated analytics dashboard tracking revenue growth and conversion rates.
 * **Data Export**: Professional reporting system that generates Excel spreadsheets for financial analysis.
 
-### Search & Weather Integration
+### ☁️ Search & Weather Integration
 
 * **Intelligent Search**: Real-time filtering based on destination, guest count, and date availability.
 * **Weather Widget**: 16-day localized forecast integration using the **Open-Meteo API**.
@@ -41,11 +43,11 @@ To prevent Cross-Site Scripting (XSS), all dynamic inputs undergo rigorous sanit
 
 ## 🖥️ User Experience & Dashboards
 
-| User Role | Dashboard Primary Function | Key Interface Elements | Visual Preview |
+| User Role | Dashboard Primary Function | Key Interface Elements | Interface Preview |
 | --- | --- | --- | --- |
-| **Admin** | **System Oversight** | Analytics graphs, User management, Database Hub | <img src="assets/img/admin_dashboard.png" alt="Admin Panel" width="100"> </p> |
-| **Manager** | **Property Control** | Revenue tracking, Property CRUD, Booking management | <img src="assets/img/manager_dashboard.png" alt="Manager Panel" width="100"> </p>  |
-| **Client** | **Traveler Hub** | Interactive search, Messaging inbox, Personal reservations | <img src="assets/img/client_dashboard.png" alt="Client Panel" width="100"> </p> |
+| **Admin** | **System Oversight** | Analytics graphs, User management, Database Hub | <img src="assets/img/admin_dashboard.png" alt="Admin Panel" width="400"> |
+| **Manager** | **Property Control** | Revenue tracking, Property CRUD, Booking management | <img src="assets/img/manager_dashboard.png" alt="Manager Panel" width="400"> |
+| **Client** | **Traveler Hub** | Interactive search, Messaging inbox, Personal reservations | <img src="assets/img/client_dashboard.png" alt="Client Panel" width="400"> |
 
 ---
 
@@ -86,14 +88,17 @@ source/
 ## 🚀 Installation & Setup
 
 1. **Database Import**:
+
 * Create a new MySQL database named `gostay`.
 * Import `source/scripts/sql/schema.sql` to generate the table structure.
 * Import `source/scripts/sql/triggers.sql` for automated data handling.
 
-
 2. **Configuration**:
+
 * Update `source/scripts/config/database.php` with your local database credentials.
 
-
 3. **Email Setup**:
+
 * Configure your SMTP credentials in `source/scripts/auth/signup.php` to enable PHPMailer.
+
+---
