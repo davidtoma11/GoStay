@@ -1,94 +1,99 @@
-# GoStay – Premium Web Booking Platform
+<p align="center"> <img src="assets/img/logo.png" alt="GoStay Logo" width="200"> </p>
 
-**GoStay** is a sophisticated marketplace platform designed to connect travelers with exclusive property listings worldwide. The project emphasizes a seamless user experience, modular architecture, and high-security standards.
+<p align="center"> <img src="https://img.shields.io/badge/php-%23777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP"> <img src="https://img.shields.io/badge/mysql-%2300f.svg?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL"> <img src="https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E" alt="JavaScript"> <img src="https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"> <img src="https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"> </p>
+
+
+# GoStay – Web Booking Platform
+
+**GoStay** is a marketplace platform designed to connect travelers with exclusive property listings worldwide. The project emphasizes a seamless user experience, modular architecture, and high-security standards.
 
 ---
 
-## Key Features
+## 🔑 Key Features
 
 ### Authentication & Security
+
 * **Dual Auth System**: Secure login and registration powered by AJAX (Fetch API).
 * **Code Verification**: Two-step registration process featuring activation code simulation.
-* **Password Recovery**: Complete account recovery flow with secure reset tokens.
-* **Security Layer**: Integrated CSRF protection and rigorous backend data validation.
+* **Security Layer**: Integrated protection against session hijacking and rigorous backend data validation.
 
-### Search & Advanced Filtering
-* **Intelligent Search**: Real-time filtering based on destination, guest count, and availability dates.
-* **Amenities Engine**: Advanced filtering system (Wi-Fi, AC, Pool, Pet Friendly, etc.) utilizing optimized SQL LEFT JOIN operations.
-* **Featured Destinations**: Interactive landing page cards that dynamically populate search parameters.
+### Analytics & Management
 
-### Weather Integration
-* **16-Day Forecast**: Integration with the Open-Meteo API to provide localized weather data for search destinations.
-* **Geocoding Engine**: Automatic transformation of city names (e.g., "Paris, FRA") into precise GPS coordinates.
-* **Dynamic Weather UI**: Custom calendar-style widget with dynamic iconography and current-day highlighting.
+* **Real-time Tracker**: Custom middleware that monitors IP addresses and page traffic to identify visitor patterns.
+* **Financial Hub**: Dedicated analytics dashboard tracking revenue growth and conversion rates.
+* **Data Export**: Professional reporting system that generates Excel spreadsheets for financial analysis.
 
-### Modular Architecture
-* **Reusable Components**: Centralized global footer managed through PHP inclusion logic.
-* **Clean URL Structure**: Logical script organization into specialized directories (Auth, Pages, Utils).
-* **Responsive Design**: Fully adaptive interface optimized for mobile, tablet, and high-resolution desktop displays.
+### Search & Weather Integration
+
+* **Intelligent Search**: Real-time filtering based on destination, guest count, and date availability.
+* **Weather Widget**: 16-day localized forecast integration using the **Open-Meteo API**.
+* **Dynamic Calendar**: Interactive booking system that visually blocks reserved dates using Flatpickr.
 
 ---
 
-## Technical Stack
+## 🛡️ Security Architecture and Data Integrity
+
+The GoStay platform implements a multi-layered security protocol designed to mitigate common web vulnerabilities and ensure transactional integrity. At the database level, the system utilizes **PDO with strictly parameterized queries** to neutralize SQL Injection risks. User authentication is managed through high-entropy hashing using the **BCRYPT algorithm**, ensuring that sensitive credentials are never stored in plain text.
+
+To prevent Cross-Site Scripting (XSS), all dynamic inputs undergo rigorous sanitization via HTML entity encoding and tag stripping before persistence or rendering. Furthermore, the application employs a transaction-based processing logic for complex operations, such as property registration, which ensures that database states remain consistent even in the event of partial execution failures. Access control is strictly enforced through role-based session validation, restricting administrative and managerial hubs to authorized personnel only.
+
+---
+
+## 🖥️ User Experience & Dashboards
+
+| User Role | Dashboard Primary Function | Key Interface Elements | Visual Preview |
+| --- | --- | --- | --- |
+| **Admin** | **System Oversight** | Analytics graphs, User management, Database Hub | <img src="assets/img/admin_dashboard.png" alt="Admin Panel" width="100"> </p> |
+| **Manager** | **Property Control** | Revenue tracking, Property CRUD, Booking management | <img src="assets/img/manager_dashboard.png" alt="Manager Panel" width="100"> </p>  |
+| **Client** | **Traveler Hub** | Interactive search, Messaging inbox, Personal reservations | <img src="assets/img/client_dashboard.png" alt="Client Panel" width="100"> </p> |
+
+---
+
+## 🛠️ Technical Stack
 
 | Layer | Technologies |
-| :--- | :--- |
+| --- | --- |
 | **Frontend** | HTML5, CSS3 (Flexbox/Grid), JavaScript (ES6+), FontAwesome 6 |
-| **Backend** | PHP 8.2 (Modular Logic), PDO (MySQL), JSON API |
-| **Database** | MySQL (Relational: Cities -> Rooms -> Facilities) |
-| **APIs** | Open-Meteo (Weather Data), Google ReCaptcha (Security) |
+| **Backend** | PHP 8.2 (Modular Logic), **PDO (MySQL)** with Prepared Statements |
+| **Database** | MySQL (Relational Schema: Cities ↔ Rooms ↔ Facilities ↔ Reservations) |
+| **APIs** | Open-Meteo (Weather), Google Maps (Location), PHPMailer (Notifications) |
 
 ---
 
-## Database Entities
-
-> **Architecture Overview**: The database is structured to maintain high data integrity and support complex filtering.
-
-* **Cities**: Stores global destinations and associated metadata.
-* **Rooms**: Detailed property inventory including capacity and pricing.
-* **Facilities**: 1:1 mapping for property amenities enabling Boolean-based filtering.
-* **Users**: Role-based access control supporting Clients, Managers, and Admins.
-* **Reservations**: Core transactional entity with built-in availability validation logic.
-
----
-
-## File Structure
+## 📁 Project Architecture
 
 ```text
 source/
-├── assets/                 # Static resources
-│   ├── fonts/              # Custom typography (e.g., Croatah)
-│   ├── img/                # Logos, system icons, and placeholders
-│   └── uploads/            # Dynamic user-uploaded content
-│       ├── cities/         # Representative city imagery
-│       └── rooms/          # Property and room photography
+├── assets/                 # Static resources and media
+│   └── uploads/            # Dynamic user content (Room photography & City icons)
 │
-├── scripts/                # Backend logic and page controllers
-│   ├── auth/               # Authentication module
-│   │   ├── login.php       # JSON API for login processing
-│   │   ├── signup.php      # Registration and verification logic
-│   │   ├── logout.php      # Session destruction
-│   │   └── reset_confirm.php 
-│   │
-│   ├── config/             # System configuration
-│   │   └── database.php    # PDO MySQL connection class
-│   │
-│   ├── pages/              # User interface controllers
-│   │   ├── index.php       # Authentication entry point
-│   │   ├── home.php        # Primary user dashboard
-│   │   └── search_results.php 
-│   │
-│   ├── support/            # Assistance module
-│   │   └── contact.php     # Help center and inquiry form
-│   │
-│   └── utils/              # Helper functions and global components
-│       ├── includes/       
-│       │   └── footer.php  # Centralized footer component
-│       └── weather_logic.php 
-│
-└── styles/                 # Cascading Style Sheets
-    ├── footer.css          # Global footer styling
-    ├── home.css            # Landing page design
-    ├── login.css           # Authentication panel aesthetics
-    ├── login.js            # Frontend logic for Auth (Fetch API)
-    └── search_results.css  # Grid, card, and weather widget styles
+└── scripts/                # Core Application Logic
+    ├── auth/               # Security: Login, Signup, E-mail Verification
+    ├── config/             # Environment: Singleton Database Connection
+    ├── crud/               # Admin: Analytics, Hub Console, Excel Export
+    ├── js/                 # Client-side: AJAX Auth and Real-time Pricing
+    ├── models/             # OOP Data Objects: User and Room business logic
+    ├── pages/              # View Controllers: Search, Chat, and Dashboards
+    ├── sql/                # Data: SQL Schemas and Automated Triggers
+    ├── styles/             # Design: Modular CSS for each UI component
+    ├── support/            # Help: Contact forms and support ticket processing
+    └── utils/              # Middleware: Tracker, Weather API, and Booking logic
+
+```
+
+---
+
+## 🚀 Installation & Setup
+
+1. **Database Import**:
+* Create a new MySQL database named `gostay`.
+* Import `source/scripts/sql/schema.sql` to generate the table structure.
+* Import `source/scripts/sql/triggers.sql` for automated data handling.
+
+
+2. **Configuration**:
+* Update `source/scripts/config/database.php` with your local database credentials.
+
+
+3. **Email Setup**:
+* Configure your SMTP credentials in `source/scripts/auth/signup.php` to enable PHPMailer.
